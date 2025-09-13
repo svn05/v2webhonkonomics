@@ -13,9 +13,10 @@ interface Lesson {
   progress: number
   locked: boolean
   completed: boolean
+  moduleId?: string
 }
 
-const lessons: Lesson[] = [
+const baseLessons: Lesson[] = [
   {
     id: 1,
     title: "Investment Basics",
@@ -23,7 +24,8 @@ const lessons: Lesson[] = [
     points: 50,
     progress: 25,
     locked: false,
-    completed: false
+    completed: false,
+    moduleId: "investment-basics",
   },
   {
     id: 2,
@@ -32,7 +34,8 @@ const lessons: Lesson[] = [
     points: 60,
     progress: 0,
     locked: false,
-    completed: false
+    completed: false,
+    moduleId: "risk-rewards",
   },
   {
     id: 3,
@@ -41,7 +44,8 @@ const lessons: Lesson[] = [
     points: 75,
     progress: 0,
     locked: true,
-    completed: false
+    completed: false,
+    moduleId: "canadian-accounts",
   },
   {
     id: 4,
@@ -50,7 +54,8 @@ const lessons: Lesson[] = [
     points: 60,
     progress: 0,
     locked: true,
-    completed: false
+    completed: false,
+    moduleId: "etf-essentials",
   },
   {
     id: 5,
@@ -58,14 +63,85 @@ const lessons: Lesson[] = [
     description: "Create your portfolio",
     points: 80,
     progress: 0,
+    locked: false,
+    completed: false,
+    moduleId: "portfolio-management",
+  },
+  {
+    id: 6,
+    title: "Market Psychology",
+    description: "Behavioral finance basics",
+    points: 60,
+    progress: 0,
     locked: true,
     completed: false
+  },
+  {
+    id: 7,
+    title: "Trading Fundamentals",
+    description: "Market vs. limit orders",
+    points: 55,
+    progress: 0,
+    locked: false,
+    completed: false,
+    moduleId: "trading-fundamentals",
+  },
+  {
+    id: 8,
+    title: "Stock Market Basics",
+    description: "Exchanges, tickers, market caps",
+    points: 55,
+    progress: 0,
+    locked: false,
+    completed: false,
+    moduleId: "stock-market-basics",
+  },
+  {
+    id: 9,
+    title: "Technical Analysis",
+    description: "Trends and indicators",
+    points: 70,
+    progress: 0,
+    locked: true,
+    completed: false,
+    moduleId: "technical-analysis",
+  },
+  {
+    id: 10,
+    title: "Options & Derivatives",
+    description: "Calls, puts, strategies",
+    points: 90,
+    progress: 0,
+    locked: true,
+    completed: false,
+    moduleId: "options-derivatives",
+  },
+  {
+    id: 11,
+    title: "Crypto Basics",
+    description: "Bitcoin, wallets, chains",
+    points: 85,
+    progress: 0,
+    locked: false,
+    completed: false,
+    moduleId: "crypto-basics",
+  },
+  {
+    id: 12,
+    title: "Day Trading Dojo",
+    description: "Intraday strategies",
+    points: 95,
+    progress: 0,
+    locked: true,
+    completed: false,
+    moduleId: "day-trading",
   }
 ]
 
-export function LearningPath({ onStartLesson }: { onStartLesson: () => void }) {
+export function LearningPath({ onStartLesson }: { onStartLesson: (moduleId: string) => void }) {
   const [currentLesson, setCurrentLesson] = useState(1)
   const [hoveredLesson, setHoveredLesson] = useState<number | null>(null)
+  const [lessons, setLessons] = useState<Lesson[]>(baseLessons)
   const scrollRef = useRef<HTMLDivElement>(null)
   const { user } = useAuth()
 
@@ -90,8 +166,36 @@ export function LearningPath({ onStartLesson }: { onStartLesson: () => void }) {
     return waveHeight
   }
 
+  // Load and compute progress/locks
+  useEffect(() => {
+    if (!user?.id) return;
+    let saved: Record<string, number> = {}
+    try {
+      const raw = localStorage.getItem(`honk_progress_${user.id}`)
+      if (raw) saved = JSON.parse(raw)
+    } catch {}
+
+    // Build lessons with progress and locks based on completion sequentially
+    const computed: Lesson[] = baseLessons.map(l => ({ ...l }))
+    let prevCompleted = true
+    for (let i = 0; i < computed.length; i++) {
+      const l = computed[i]
+      const p = l.moduleId ? (saved[l.moduleId] ?? l.progress) : l.progress
+      l.progress = p
+      const completed = p >= 100 || l.completed
+      l.completed = completed
+      l.locked = i === 0 ? false : !prevCompleted
+      prevCompleted = completed
+    }
+    setLessons(computed)
+
+    // Focus the first incomplete unlocked lesson
+    const firstIncomplete = computed.find(l => !l.completed) || computed[computed.length - 1]
+    setCurrentLesson(firstIncomplete?.id || 1)
+  }, [user?.id])
+
   return (
-    <div className="relative w-full bg-gradient-to-b from-sky-100 to-sky-50 rounded-xl overflow-hidden border border-border shadow-sm" style={{ height: '400px' }}>
+    <div className="relative w-full bg-gradient-to-b from-sky-100 to-sky-50 rounded-xl overflow-hidden border border-foreground/20" style={{ height: '400px' }}>
       {/* Sky Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-sky-200/30 via-sky-100/20 to-transparent" />
       
@@ -146,7 +250,7 @@ export function LearningPath({ onStartLesson }: { onStartLesson: () => void }) {
               >
                 {/* Cloud */}
                 <button
-                  onClick={() => !lesson.locked && onStartLesson()}
+                  onClick={() => !lesson.locked && lesson.moduleId && onStartLesson(lesson.moduleId)}
                   disabled={lesson.locked}
                   className={`relative transition-all duration-300 ease-out ${
                     !lesson.locked ? 'hover:scale-105 cursor-pointer' : 'cursor-not-allowed'
