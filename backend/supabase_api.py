@@ -30,7 +30,12 @@ except Exception as e:
     raise RuntimeError(f"Failed to create Supabase client: {e}")
 
 
+
 app = FastAPI(title="Supabase Bridge")
+
+# Mount the stats router
+from stats import router as stats_router
+app.include_router(stats_router)
 
 # Mount the account router
 from account import router as account_router

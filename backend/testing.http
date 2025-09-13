@@ -1,3 +1,19 @@
+### Get Stats
+GET http://localhost:8001/get-stats?user_id=05b7216e-4f21-4b5f-bce7-cae329707e1b
+Content-Type: application/json
+
+### Post Stats
+POST http://localhost:8001/post-stats
+Content-Type: application/json
+
+{
+  "user_id": "05b7216e-4f21-4b5f-bce7-cae329707e1b",
+  "points": 100,
+  "eggs": 5,
+  "streak": 7,
+  "level": "intermediate"
+}
+
 ### Get Name
 GET http://localhost:8001/get-name?user_id=05b7216e-4f21-4b5f-bce7-cae329707e1b
 Content-Type: application/json
