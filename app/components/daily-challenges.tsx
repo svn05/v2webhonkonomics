@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -64,12 +65,24 @@ const todaysChallenges: Challenge[] = [
 const stockOrNotQuestions: StockOrNotQuestion[] = [
   { symbol: "AAPL", isReal: true, hint: "Think fruit company" },
   { symbol: "GOOGL", isReal: true, hint: "Search engine giant" },
-  { symbol: "HONK", isReal: false, hint: "Too obvious for our goose theme!" },
   { symbol: "TSLA", isReal: true, hint: "Electric vehicle pioneer" },
-  { symbol: "FAKE", isReal: false, hint: "This one's pretty obvious" },
   { symbol: "MSFT", isReal: true, hint: "Software giant from Seattle" },
-  { symbol: "GOOSE", isReal: false, hint: "Our mascot isn't publicly traded... yet!" },
   { symbol: "AMZN", isReal: true, hint: "Everything store" },
+  { symbol: "NVDA", isReal: true, hint: "AI chips leader" },
+  { symbol: "META", isReal: true, hint: "Social + VR" },
+  { symbol: "NFLX", isReal: true, hint: "Streaming pioneer" },
+  { symbol: "RY", isReal: true, hint: "Royal Bank of Canada" },
+  { symbol: "RBC", isReal: true, hint: "RBC Bearings (also think Canadian bank)" },
+  { symbol: "SHOP", isReal: true, hint: "Canadian e‑commerce" },
+  { symbol: "BNS", isReal: true, hint: "Scotiabank" },
+  { symbol: "TD", isReal: true, hint: "Another big Canadian bank" },
+  { symbol: "XIC", isReal: true, hint: "Canadian broad market ETF" },
+  { symbol: "VOO", isReal: true, hint: "S&P 500 ETF" },
+  { symbol: "QQQ", isReal: true, hint: "NASDAQ 100 ETF" },
+  { symbol: "HONK", isReal: false, hint: "Too on‑brand for our goose!" },
+  { symbol: "GOOSE", isReal: false, hint: "Our mascot isn't listed... yet!" },
+  { symbol: "DUCK", isReal: false, hint: "More of a pond vibe than a ticker" },
+  { symbol: "EGG", isReal: false, hint: "Yummy but not a ticker" },
 ]
 
 const priceIsRightQuestions: PriceIsRightQuestion[] = [
@@ -105,6 +118,12 @@ export function DailyChallenges() {
   const [score, setScore] = useState(0)
   const [gameComplete, setGameComplete] = useState(false)
   const [userAnswers, setUserAnswers] = useState<any[]>([])
+  const [completed, setCompleted] = useState<Record<string, boolean>>({})
+  const [summary, setSummary] = useState<{
+    finalScore: number
+    pointsEarned: number
+    challenge: Challenge
+  } | null>(null)
   const { user, updateUser } = useAuth()
 
   if (!user) return null
@@ -119,6 +138,7 @@ export function DailyChallenges() {
   const startChallenge = (challenge: Challenge) => {
     setSelectedChallenge(challenge)
     resetGame()
+    setSummary(null)
   }
 
   const completeChallenge = (finalScore: number, challenge: Challenge) => {
@@ -128,9 +148,38 @@ export function DailyChallenges() {
       goldenEggs: finalScore >= 80 ? user.goldenEggs + 1 : user.goldenEggs,
     })
     setGameComplete(true)
+    setCompleted((prev) => ({ ...prev, [challenge.id]: true }))
+    setSummary({ finalScore, pointsEarned, challenge })
   }
 
   if (selectedChallenge) {
+    if (summary) {
+      return (
+        <div className="max-w-2xl mx-auto p-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-center">{summary.challenge.title} — Results</CardTitle>
+              <CardDescription className="text-center">Great job! Here’s how you did today.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center gap-4 py-4">
+                <Image src="/goose_cheering.png" alt="Celebration Goose" width={96} height={96} />
+                <div className="text-2xl font-bold">Score: {summary.finalScore}%</div>
+                <div className="flex items-center gap-2 text-lg">
+                  <Image src="/honk_point.png" alt="Honk Points" width={24} height={24} />
+                  <span>+{summary.pointsEarned} Honk Points</span>
+                </div>
+                <div className="text-sm text-muted-foreground">Bonus Golden Egg for 80%+ scores</div>
+                <div className="flex gap-3 mt-4">
+                  <Button variant="outline" onClick={() => setSelectedChallenge(null)}>Back to Challenges</Button>
+                  <Button onClick={() => startChallenge(summary.challenge)}>Replay</Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )
+    }
     if (selectedChallenge.type === "stock-or-not") {
       return (
         <StockOrNotGame
@@ -195,7 +244,7 @@ export function DailyChallenges() {
       {/* Challenge List */}
       <div className="space-y-4">
         {todaysChallenges.map((challenge) => (
-          <Card key={challenge.id} className={challenge.completed ? "opacity-60" : "hover:shadow-md transition-shadow"}>
+          <Card key={challenge.id} className={(completed[challenge.id] || challenge.completed) ? "opacity-60" : "border border-foreground/20"}>
             <CardContent className="pt-6">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -212,7 +261,7 @@ export function DailyChallenges() {
                     >
                       {challenge.difficulty}
                     </Badge>
-                    {challenge.completed && <Badge variant="outline">✓ Completed</Badge>}
+                    {(completed[challenge.id] || challenge.completed) && <Badge variant="outline">✓ Completed</Badge>}
                   </div>
                   <p className="text-muted-foreground mb-3">{challenge.description}</p>
                   <div className="flex items-center gap-4 text-sm">
@@ -223,10 +272,10 @@ export function DailyChallenges() {
                 <div className="ml-4">
                   <Button
                     onClick={() => startChallenge(challenge)}
-                    disabled={challenge.completed}
-                    variant={challenge.completed ? "outline" : "default"}
+                    disabled={completed[challenge.id] || challenge.completed}
+                    variant={(completed[challenge.id] || challenge.completed) ? "outline" : "default"}
                   >
-                    {challenge.completed ? "Completed" : "Start Challenge"}
+                    {(completed[challenge.id] || challenge.completed) ? "Completed" : "Start Challenge"}
                   </Button>
                 </div>
               </div>
@@ -260,6 +309,7 @@ function StockOrNotGame({
   const [score, setScore] = useState(0)
   const [showResult, setShowResult] = useState(false)
   const [selectedAnswer, setSelectedAnswer] = useState<boolean | null>(null)
+  const [showBurst, setShowBurst] = useState(false)
 
   const currentQuestion = stockOrNotQuestions[currentIndex]
   const progress = ((currentIndex + 1) / stockOrNotQuestions.length) * 100
@@ -270,9 +320,11 @@ function StockOrNotGame({
 
     if (isReal === currentQuestion.isReal) {
       setScore(score + 1)
+      setShowBurst(true)
     }
 
     setTimeout(() => {
+      setShowBurst(false)
       if (currentIndex < stockOrNotQuestions.length - 1) {
         setCurrentIndex(currentIndex + 1)
         setShowResult(false)
@@ -303,17 +355,50 @@ function StockOrNotGame({
           <CardDescription className="text-center">Is this a real stock ticker symbol?</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="text-center">
-            <div className="text-6xl font-bold text-primary mb-4">{currentQuestion.symbol}</div>
-            {currentQuestion.hint && <p className="text-sm text-muted-foreground mb-6">Hint: {currentQuestion.hint}</p>}
+          <div className="text-center relative">
+            <div className="flex justify-center mb-2">
+              <Image src="/goose_thinking.png" alt="Goose" width={64} height={64} />
+            </div>
+            <div className="text-6xl font-bold text-primary mb-2">{currentQuestion.symbol}</div>
+            {currentQuestion.hint && <p className="text-sm text-muted-foreground mb-4">Hint: {currentQuestion.hint}</p>}
+            {showBurst && (
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                <div className="relative w-40 h-40">
+                  {[...Array(8)].map((_, i) => (
+                    <Image
+                      key={i}
+                      src="/honk_point.png"
+                      alt="Coin"
+                      width={20}
+                      height={20}
+                      className="absolute animate-bounce"
+                      style={{
+                        left: `${50 + 40 * Math.cos((i / 8) * 2 * Math.PI)}%`,
+                        top: `${50 + 40 * Math.sin((i / 8) * 2 * Math.PI)}%`,
+                        transform: "translate(-50%, -50%)",
+                        animationDelay: `${i * 80}ms`,
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {showResult ? (
-            <div className="text-center space-y-4">
-              <div
-                className={`text-4xl ${selectedAnswer === currentQuestion.isReal ? "text-green-600" : "text-red-600"}`}
-              >
-                {selectedAnswer === currentQuestion.isReal ? "✓ Correct!" : "✗ Wrong!"}
+            <div className="text-center space-y-4" role="status" aria-live="polite">
+              <div className={`text-4xl ${selectedAnswer === currentQuestion.isReal ? "text-green-600" : "text-red-600"}`}>
+                {selectedAnswer === currentQuestion.isReal ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <Image src="/goose_cheering.png" alt="Correct" width={64} height={64} />
+                    ✓ Correct!
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <Image src="/goose_thinking.png" alt="Wrong" width={64} height={64} />
+                    ✗ Wrong!
+                  </div>
+                )}
               </div>
               <p className="text-muted-foreground">
                 {currentQuestion.symbol} is {currentQuestion.isReal ? "a real" : "not a real"} stock ticker
@@ -353,6 +438,7 @@ function PriceIsRightGame({
   const [userGuess, setUserGuess] = useState("")
   const [showResult, setShowResult] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
+  const [showBurst, setShowBurst] = useState(false)
 
   const currentQuestion = priceIsRightQuestions[currentIndex]
   const progress = ((currentIndex + 1) / priceIsRightQuestions.length) * 100
@@ -364,6 +450,7 @@ function PriceIsRightGame({
 
     const correct = Math.abs(guess - actual) <= tolerance
     setIsCorrect(correct)
+    if (correct) setShowBurst(true)
     setShowResult(true)
 
     if (correct) {
@@ -375,6 +462,7 @@ function PriceIsRightGame({
         setCurrentIndex(currentIndex + 1)
         setShowResult(false)
         setUserGuess("")
+        setShowBurst(false)
       } else {
         const finalScore = Math.round(((score + (correct ? 1 : 0)) / priceIsRightQuestions.length) * 100)
         onComplete(finalScore, challenge)
@@ -405,9 +493,19 @@ function PriceIsRightGame({
           </div>
 
           {showResult ? (
-            <div className="text-center space-y-4">
+            <div className="text-center space-y-4" role="status" aria-live="polite">
               <div className={`text-4xl ${isCorrect ? "text-green-600" : "text-red-600"}`}>
-                {isCorrect ? "✓ Close Enough!" : "✗ Not Quite!"}
+                {isCorrect ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <Image src="/goose_cheering.png" alt="Correct" width={64} height={64} />
+                    ✓ Close Enough!
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <Image src="/goose_thinking.png" alt="Wrong" width={64} height={64} />
+                    ✗ Not Quite!
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <p>Your guess: ${Number.parseFloat(userGuess).toFixed(2)}</p>
@@ -418,8 +516,11 @@ function PriceIsRightGame({
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 relative">
               <div className="text-center">
+                <div className="flex justify-center mb-3">
+                  <Image src="/goose_glass.png" alt="Professor Goose" width={56} height={56} />
+                </div>
                 <p className="text-sm text-muted-foreground mb-4">
                   Price range hint: ${currentQuestion.range.min} - ${currentQuestion.range.max}
                 </p>
@@ -438,6 +539,28 @@ function PriceIsRightGame({
                   Submit
                 </Button>
               </div>
+              {showBurst && (
+                <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                  <div className="relative w-40 h-40">
+                    {[...Array(8)].map((_, i) => (
+                      <Image
+                        key={i}
+                        src="/honk_point.png"
+                        alt="Coin"
+                        width={20}
+                        height={20}
+                        className="absolute animate-bounce"
+                        style={{
+                          left: `${50 + 40 * Math.cos((i / 8) * 2 * Math.PI)}%`,
+                          top: `${50 + 40 * Math.sin((i / 8) * 2 * Math.PI)}%`,
+                          transform: "translate(-50%, -50%)",
+                          animationDelay: `${i * 80}ms`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -464,6 +587,7 @@ function MarketMinuteGame({
   const [score, setScore] = useState(0)
   const [gameStarted, setGameStarted] = useState(false)
   const [gameEnded, setGameEnded] = useState(false)
+  const [showBurst, setShowBurst] = useState(false)
 
   const questions = [
     { question: "What does ETF stand for?", answer: "Exchange-Traded Fund" },
@@ -511,7 +635,7 @@ function MarketMinuteGame({
               </Button>
             </div>
           ) : gameEnded ? (
-            <div className="text-center space-y-4">
+            <div className="text-center space-y-4" role="status" aria-live="polite">
               <div className="text-4xl text-primary mb-4">🎉</div>
               <h3 className="text-xl font-bold">Time's Up!</h3>
               <p>
@@ -522,7 +646,7 @@ function MarketMinuteGame({
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 relative">
               <div className="text-center">
                 <h3 className="text-lg font-medium mb-4">{questions[currentIndex]?.question}</h3>
                 <p className="text-sm text-muted-foreground">Think fast! ⚡</p>
@@ -531,6 +655,8 @@ function MarketMinuteGame({
                 <Button
                   onClick={() => {
                     setScore(score + 1)
+                    setShowBurst(true)
+                    setTimeout(() => setShowBurst(false), 800)
                     if (currentIndex < questions.length - 1) {
                       setCurrentIndex(currentIndex + 1)
                     }
@@ -539,6 +665,28 @@ function MarketMinuteGame({
                   I Know This! (+1 Point)
                 </Button>
               </div>
+              {showBurst && (
+                <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                  <div className="relative w-40 h-40">
+                    {[...Array(8)].map((_, i) => (
+                      <Image
+                        key={i}
+                        src="/honk_point.png"
+                        alt="Coin"
+                        width={20}
+                        height={20}
+                        className="absolute animate-bounce"
+                        style={{
+                          left: `${50 + 40 * Math.cos((i / 8) * 2 * Math.PI)}%`,
+                          top: `${50 + 40 * Math.sin((i / 8) * 2 * Math.PI)}%`,
+                          transform: "translate(-50%, -50%)",
+                          animationDelay: `${i * 80}ms`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="text-center text-sm text-muted-foreground">
                 Question {currentIndex + 1} of {questions.length} • Score: {score}
               </div>
