@@ -29,7 +29,12 @@ try:
 except Exception as e:
     raise RuntimeError(f"Failed to create Supabase client: {e}")
 
+
 app = FastAPI(title="Supabase Bridge")
+
+# Mount the account router
+from account import router as account_router
+app.include_router(account_router)
 
 app.add_middleware(
     CORSMiddleware,

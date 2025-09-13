@@ -1,0 +1,44 @@
+### Get Name
+GET http://localhost:8001/get-name?user_id=05b7216e-4f21-4b5f-bce7-cae329707e1b
+Content-Type: application/json
+
+### Post Name
+POST http://localhost:8001/post-name
+Content-Type: application/json
+
+{
+  "user_id": "<USER_ID>",
+  "name": "New Name"
+}
+
+### Get Email
+GET http://localhost:8001/get-email?user_id=<USER_ID>
+Content-Type: application/json
+
+### Test Sign Up
+POST http://localhost:8001/signup
+Content-Type: application/json
+
+{
+  "email": "wnhbecbdotymwpwody@fxavaj.com",
+  "password": "password",
+  "name": "Angela"
+}
+
+### Test Login
+POST http://localhost:8001/login
+Content-Type: application/json
+
+{
+  "email": "wnhbecbdotymwpwody@fxavaj.com",
+  "password": "password"
+}
+
+
+### Test Sign Out
+POST http://localhost:8001/signout
+Content-Type: application/json
+
+{
+  "access_token": "<ACCESS_TOKEN_FROM_LOGIN_RESPONSE>"
+}
