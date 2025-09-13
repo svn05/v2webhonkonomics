@@ -144,8 +144,6 @@ export function PortfolioManagement() {
   const [portfolioValue] = useState(10000) // Starting with $10,000 mock money
   const [totalGainLoss] = useState(234.56) // Mock gain/loss
   const { user } = useAuth()
-<<<<<<< HEAD
-=======
   const [client, setClient] = useState<InvestEaseClient | null>(null)
   const [portfolios, setPortfolios] = useState<InvestEasePortfolio[]>([])
   const [loading, setLoading] = useState(false)
@@ -270,7 +268,6 @@ export function PortfolioManagement() {
       cancelled = true
     }
   }, [user?.investEaseClientId])
->>>>>>> 3653099 (porfolio)
 
   if (!user) return null
 

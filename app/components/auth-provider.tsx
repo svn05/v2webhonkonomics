@@ -96,58 +96,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Mock authentication - in real app would call API
-    if (email && password) {
-      const name = email.split("@")[0]
-      const investEaseClientId = await ensureInvestEaseClient(name, email)
-      const mockUser: User = {
-        id: "1",
-        email,
-        name,
-        investEaseClientId,
-        honkPoints: 100,
-        goldenEggs: 5,
-        streak: 1,
-        level: 1,
-        gooseAccessories: ["basic"],
-        portfolioType: "",
-        riskTolerance: "moderate",
-        investmentGoals: [],
-        experienceLevel: "beginner",
-        hasCompletedOnboarding: false,
+    try {
+      const res = await fetch("http://localhost:8001/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      })
+      if (!res.ok) return false
+      const data = await res.json()
+      if (data && data.user_id && data.email) {
+        setUser({
+          id: data.user_id,
+          email: data.email,
+          name: data.email.split("@")[0], // or fetch name from /get-name if needed
+          honkPoints: 0,
+          goldenEggs: 0,
+          streak: 0,
+          level: 1,
+          gooseAccessories: ["basic"],
+          portfolioType: "",
+          riskTolerance: "moderate",
+          investmentGoals: [],
+          experienceLevel: "beginner",
+          hasCompletedOnboarding: false,
+        })
+        localStorage.setItem(
+          "honkonomics_user",
+          JSON.stringify({
+            id: data.user_id,
+            email: data.email,
+            name: data.email.split("@")[0],
+            honkPoints: 0,
+            goldenEggs: 0,
+            streak: 0,
+            level: 1,
+            gooseAccessories: ["basic"],
+            portfolioType: "",
+            riskTolerance: "moderate",
+            investmentGoals: [],
+            experienceLevel: "beginner",
+            hasCompletedOnboarding: false,
+          })
+        )
+        return true
       }
-      setUser(mockUser)
-      localStorage.setItem("honkonomics_user", JSON.stringify(mockUser))
-      return true
+      return false
+    } catch (e) {
+      return false
     }
-    return false
   }
 
   const register = async (email: string, password: string, name: string): Promise<boolean> => {
-    // Mock registration - in real app would call API
-    if (email && password && name) {
-      const investEaseClientId = await ensureInvestEaseClient(name, email)
-      const newUser: User = {
-        id: Date.now().toString(),
-        email,
-        name,
-        investEaseClientId,
-        honkPoints: 50,
-        goldenEggs: 2,
-        streak: 0,
-        level: 1,
-        gooseAccessories: ["basic"],
-        portfolioType: "",
-        riskTolerance: "moderate",
-        investmentGoals: [],
-        experienceLevel: "beginner",
-        hasCompletedOnboarding: false,
-      }
-      setUser(newUser)
-      localStorage.setItem("honkonomics_user", JSON.stringify(newUser))
-      return true
+    try {
+      const res = await fetch("http://localhost:8001/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, name }),
+      })
+      if (!res.ok) return false
+      // Optionally, auto-login after registration
+      return await login(email, password)
+    } catch (e) {
+      return false
     }
-    return false
   }
 
   const logout = () => {
