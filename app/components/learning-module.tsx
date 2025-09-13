@@ -915,7 +915,7 @@ const moduleMap: { [key: string]: Module } = {
   "crypto-basics": cryptoBasicsModule
 }
 
-export function LearningModule({ moduleId, onComplete }: { moduleId: string; onComplete: () => void }) {
+export function LearningModule({ moduleId, onComplete, onProgress }: { moduleId: string; onComplete: () => void; onProgress?: (percent: number) => void }) {
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0)
   const [moduleProgress, setModuleProgress] = useState(0)
   const [earnedPoints, setEarnedPoints] = useState(0)
@@ -930,6 +930,17 @@ export function LearningModule({ moduleId, onComplete }: { moduleId: string; onC
   const module = moduleMap[moduleId] || investmentBasicsModule
   const currentActivity = module.activities[currentActivityIndex]
   const progress = ((currentActivityIndex + 1) / module.activities.length) * 100
+
+  // Notify parent of progress changes outside render
+  useEffect(() => {
+    const pct = Math.round(((currentActivityIndex + 1) / module.activities.length) * 100)
+    if (pct !== moduleProgress) {
+      setModuleProgress(pct)
+    }
+    if (onProgress) {
+      onProgress(pct)
+    }
+  }, [currentActivityIndex, module.activities.length])
 
   const handleActivityComplete = (points: number) => {
     const newEarnedPoints = earnedPoints + points
@@ -948,6 +959,7 @@ export function LearningModule({ moduleId, onComplete }: { moduleId: string; onC
       updateUser({
         honkPoints: (user?.honkPoints || 0) + newEarnedPoints
       })
+      if (onProgress) onProgress(100)
       setTimeout(() => {
         onComplete()
       }, 2000)
@@ -1018,7 +1030,7 @@ export function LearningModule({ moduleId, onComplete }: { moduleId: string; onC
       </div>
 
       {/* Current Activity */}
-      <Card className="min-h-[400px] bg-card/95 backdrop-blur-sm">
+      <Card className="min-h-[400px] bg-card/95 backdrop-blur-sm border border-foreground/20">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             {currentActivity.title}

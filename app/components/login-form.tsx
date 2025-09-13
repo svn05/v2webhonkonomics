@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -50,11 +51,11 @@ export function LoginForm() {
           className="object-cover opacity-20"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/70 to-background/95" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/10 to-background/70" />
       </div>
       
       {/* Login Card */}
-      <Card className="w-full max-w-md relative z-10 shadow-2xl">
+      <Card className="w-full max-w-md relative z-10 border-foreground/20">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <Image
@@ -74,8 +75,10 @@ export function LoginForm() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
-              <div>
+              <div className="space-y-1.5">
+                <Label htmlFor="name">Name</Label>
                 <Input
+                  id="name"
                   type="text"
                   placeholder="Your name"
                   value={name}
@@ -86,24 +89,34 @@ export function LoginForm() {
               </div>
             )}
             <div>
-              <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="bg-input/50"
-              />
+              <div className="space-y-1.5">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="bg-input/50"
+                  autoComplete="email"
+                />
+              </div>
             </div>
             <div>
-              <Input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="bg-input/50"
-              />
+              <div className="space-y-1.5">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="bg-input/50"
+                  autoComplete={isLogin ? "current-password" : "new-password"}
+                />
+              </div>
             </div>
             <Button
               type="submit"
