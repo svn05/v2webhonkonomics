@@ -1,0 +1,246 @@
+"use client"
+
+import { useState, useRef, useEffect } from "react"
+import Image from "next/image"
+import { useAuth } from "./auth-provider"
+import { Button } from "@/components/ui/button"
+
+interface Lesson {
+  id: number
+  title: string
+  description: string
+  points: number
+  progress: number
+  locked: boolean
+  completed: boolean
+}
+
+const lessons: Lesson[] = [
+  {
+    id: 1,
+    title: "Investment Basics",
+    description: "Learn the fundamentals",
+    points: 50,
+    progress: 25,
+    locked: false,
+    completed: false
+  },
+  {
+    id: 2,
+    title: "Risk & Return",
+    description: "Understanding risk profiles",
+    points: 60,
+    progress: 0,
+    locked: false,
+    completed: false
+  },
+  {
+    id: 3,
+    title: "Canadian Tax Accounts",
+    description: "TFSA, RRSP, and more",
+    points: 75,
+    progress: 0,
+    locked: true,
+    completed: false
+  },
+  {
+    id: 4,
+    title: "ETF Essentials",
+    description: "Exchange-Traded Funds",
+    points: 60,
+    progress: 0,
+    locked: true,
+    completed: false
+  },
+  {
+    id: 5,
+    title: "Portfolio Building",
+    description: "Create your portfolio",
+    points: 80,
+    progress: 0,
+    locked: true,
+    completed: false
+  }
+]
+
+export function LearningPath({ onStartLesson }: { onStartLesson: () => void }) {
+  const [currentLesson, setCurrentLesson] = useState(1)
+  const [hoveredLesson, setHoveredLesson] = useState<number | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const { user } = useAuth()
+
+  useEffect(() => {
+    // Auto-scroll to current lesson on mount
+    if (scrollRef.current) {
+      const cloudWidth = 200
+      const scrollPosition = (currentLesson - 1) * cloudWidth - 100
+      scrollRef.current.scrollTo({ left: scrollPosition, behavior: 'smooth' })
+    }
+  }, [currentLesson])
+
+  const getCloudImage = (lesson: Lesson) => {
+    if (lesson.completed) return "/cloud_completed.png"
+    if (lesson.locked) return "/cloud_locked.png"
+    return "/cloud_unlocked.png"
+  }
+
+  const getCloudPosition = (index: number) => {
+    // Create a wave pattern for cloud heights
+    const waveHeight = Math.sin(index * 0.8) * 30 + 120
+    return waveHeight
+  }
+
+  return (
+    <div className="relative w-full bg-gradient-to-b from-sky-100 to-sky-50 rounded-xl overflow-hidden border border-border shadow-sm" style={{ height: '400px' }}>
+      {/* Sky Background Gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-sky-200/30 via-sky-100/20 to-transparent" />
+      
+      {/* Scrollable Path Container */}
+      <div 
+        ref={scrollRef}
+        className="relative h-full overflow-x-auto overflow-y-hidden scrollbar-hide"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        <div className="relative h-full" style={{ width: `${lessons.length * 200 + 100}px` }}>
+          {/* Flight Path */}
+          <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 1 }}>
+            {lessons.map((lesson, index) => {
+              if (index === 0) return null
+              const prevX = (index - 1) * 200 + 100
+              const prevY = getCloudPosition(index - 1) + 80
+              const currX = index * 200 + 100
+              const currY = getCloudPosition(index) + 80
+              
+              return (
+                <line
+                  key={`path-${index}`}
+                  x1={prevX}
+                  y1={prevY}
+                  x2={currX}
+                  y2={currY}
+                  stroke={lesson.locked ? "#cbd5e1" : "#60a5fa"}
+                  strokeWidth="2"
+                  strokeDasharray="5,5"
+                  opacity={0.6}
+                />
+              )
+            })}
+          </svg>
+
+          {/* Clouds */}
+          {lessons.map((lesson, index) => {
+            const isCurrentLesson = lesson.id === currentLesson
+            const cloudY = getCloudPosition(index)
+            
+            return (
+              <div
+                key={lesson.id}
+                className="absolute transition-all duration-300 group"
+                style={{
+                  left: `${index * 200 + 50}px`,
+                  top: `${cloudY}px`,
+                  zIndex: isCurrentLesson ? 3 : 2
+                }}
+                onMouseEnter={() => setHoveredLesson(lesson.id)}
+                onMouseLeave={() => setHoveredLesson(null)}
+              >
+                {/* Cloud */}
+                <button
+                  onClick={() => !lesson.locked && onStartLesson()}
+                  disabled={lesson.locked}
+                  className={`relative transition-all duration-300 ease-out ${
+                    !lesson.locked ? 'hover:scale-105 cursor-pointer' : 'cursor-not-allowed'
+                  }`}
+                >
+                  <div className="relative w-32 h-32">
+                    {/* Cloud Image */}
+                    <Image 
+                      src={getCloudImage(lesson)} 
+                      alt={`Lesson ${lesson.id}`}
+                      width={128}
+                      height={128}
+                      className="w-full h-full object-contain"
+                    />
+                    
+                    {/* Lesson Number */}
+                    <div className="absolute -top-2 -right-2 w-8 h-8 bg-sky-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                      {lesson.id}
+                    </div>
+
+                    {/* Progress Ring for Current Lesson */}
+                    {isCurrentLesson && lesson.progress > 0 && (
+                      <svg className="absolute inset-0 w-full h-full -rotate-90">
+                        <circle
+                          cx="64"
+                          cy="64"
+                          r="60"
+                          fill="none"
+                          stroke="#e2e8f0"
+                          strokeWidth="4"
+                        />
+                        <circle
+                          cx="64"
+                          cy="64"
+                          r="60"
+                          fill="none"
+                          stroke="#3b82f6"
+                          strokeWidth="4"
+                          strokeDasharray={`${2 * Math.PI * 60}`}
+                          strokeDashoffset={`${2 * Math.PI * 60 * (1 - lesson.progress / 100)}`}
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    )}
+                  </div>
+                </button>
+
+                {/* Goose on Current Lesson */}
+                {isCurrentLesson && (
+                  <div className="absolute -top-20 left-1/2 transform -translate-x-1/2 animate-bounce">
+                    <Image 
+                      src="/goose_flying_1.png" 
+                      alt="Flying Goose"
+                      width={64}
+                      height={64}
+                      className="w-16 h-16 object-contain scale-x-[-1]"
+                    />
+                  </div>
+                )}
+
+                {/* Hover Tooltip */}
+                {hoveredLesson === lesson.id && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-foreground text-background px-3 py-2 rounded-lg text-sm whitespace-nowrap z-10">
+                    <div className="font-semibold">{lesson.title}</div>
+                    <div className="text-xs opacity-90">{lesson.description}</div>
+                    <div className="text-xs mt-1 flex items-center gap-1">
+                      <Image src="/honk_point.png" alt="Points" width={12} height={12} />
+                      <span>{lesson.points} points</span>
+                    </div>
+                    {lesson.progress > 0 && (
+                      <div className="text-xs mt-1">{lesson.progress}% complete</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Current Progress Text */}
+      <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur-sm rounded-lg px-4 py-2 border border-border">
+        <div className="text-sm font-semibold">{lessons[currentLesson - 1].title}</div>
+        <div className="text-xs text-muted-foreground">
+          {lessons[currentLesson - 1].progress}% Complete 
+          {currentLesson < lessons.length && ` • Next: ${lessons[currentLesson].title}`}
+        </div>
+      </div>
+
+      {/* Points Display */}
+      <div className="absolute top-4 right-4 bg-card/90 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center gap-2 border border-border">
+        <Image src="/honk_point.png" alt="Honk Points" width={24} height={24} />
+        <span className="font-semibold">{user?.honkPoints || 0}</span>
+      </div>
+    </div>
+  )
+}
