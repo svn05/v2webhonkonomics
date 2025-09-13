@@ -8,10 +8,12 @@ from typing import Optional
 import httpx
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import HTTPException
 
 # ----------------- CONFIG (no .env) -----------------
 RBC_BASE = "https://2dcq63co40.execute-api.us-east-1.amazonaws.com/dev"
-FRONTEND_ORIGIN = "http://localhost:3000","http://localhost:5432"   # change to your React origin
+# Allowed frontend origins for CORS
+FRONTEND_ORIGINS = ["http://localhost:3000", "http://localhost:5432"]  # change to your React origin(s)
 TEAM_NAME = "TeamSYDE"
 CONTACT_EMAIL = "david.olejniczak@icloud.com"
 PRESEEDED_JWT: Optional[str] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZWFtSWQiOiI0YmRjMDc0Ny01MWE4LTQ2YTktODBhZC0yNGE0Y2IxMTllMTAiLCJ0ZWFtX25hbWUiOiJUZWFtU1lERSIsImNvbnRhY3RfZW1haWwiOiJkYXZpZC5vbGVqbmljemFrQGljbG91ZC5jb20iLCJleHAiOjE3NTg2MTA3ODQuNzQzODYzfQ.xPGypKCcddtKLGIhvX9qxZYRN6qd9ILD1Ks9dVDt9QU"
@@ -22,7 +24,7 @@ app = FastAPI(title="InvestEase BFF")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_ORIGIN],
+    allow_origins=FRONTEND_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -61,6 +63,7 @@ async def investease_proxy(request: Request, path: str):
 
     return Response(content=r.content, status_code=r.status_code,
                     media_type=r.headers.get("content-type", "application/json"))
+
 
 if __name__ == "__main__":
     import uvicorn
