@@ -17,7 +17,7 @@ SUPABASE_URL = "https://tsdqdpwprlhilajqurue.supabase.co"  # <— paste your pro
 SUPABASE_ANON_KEY = "sb_publishable_RlX5wusmndry43NzKFBKSQ_1trRq3hG"  # you provided this
 
 # The frontend origin allowed to call this API:
-FRONTEND_ORIGINS = ["http://localhost:8000", "http://localhost:3000"]  # list of strings
+FRONTEND_ORIGINS = ["http://localhost:8000", "http://localhost:3000","https://htn2025-508985230aed.herokuapp.com","https://v2webhonkonomics.vercel.app"]  # list of strings
 
 # Optional table allowlist. Keep [] to allow all during dev.
 ALLOWED_TABLES: List[str] = []  

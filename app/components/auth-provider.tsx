@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user?.email])
 
   const ensureInvestEaseClient = async (name: string, email: string): Promise<string | undefined> => {
-    const base = "http://localhost:8000"
+    const base = "https://htn2025-508985230aed.herokuapp.com/"
     try {
       // 1) Try to find an existing client by email
       const listRes = await fetch(`${base}/investease/clients`)
