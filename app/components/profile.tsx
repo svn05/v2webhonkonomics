@@ -115,11 +115,11 @@ export function Profile() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <div className="text-sm font-medium text-muted-foreground mb-1">Experience Level</div>
-              <Badge variant="secondary">{user.experienceLevel}</Badge>
+              <Badge variant="secondary" className="capitalize">{user.experienceLevel}</Badge>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground mb-1">Risk Tolerance</div>
-              <Badge variant="secondary">{user.riskTolerance}</Badge>
+              <Badge variant="secondary" className="capitalize">{user.riskTolerance} Risk</Badge>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground mb-1">Portfolio Type</div>

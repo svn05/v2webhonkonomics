@@ -3,7 +3,7 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
-interface SelectCardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface SelectCardProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   selected?: boolean
   disabled?: boolean
   icon?: React.ReactNode
@@ -11,13 +11,15 @@ interface SelectCardProps extends React.HTMLAttributes<HTMLDivElement> {
   description?: string
 }
 
-const SelectCard = React.forwardRef<HTMLDivElement, SelectCardProps>(
+const SelectCard = React.forwardRef<HTMLButtonElement, SelectCardProps>(
   ({ className, selected, disabled, icon, title, description, onClick, ...props }, ref) => {
     return (
-      <div
+      <button
+        type="button"
         ref={ref}
         className={cn(
-          "relative cursor-pointer rounded-xl border-2 p-6 transition-all duration-200",
+          "relative cursor-pointer rounded-xl border-2 p-6 transition-all duration-200 text-left",
+          "w-full h-44 sm:h-48 md:h-52 lg:h-56", // consistent height across screens
           "hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]",
           selected
             ? "border-primary bg-primary/10 shadow-md"
@@ -26,9 +28,12 @@ const SelectCard = React.forwardRef<HTMLDivElement, SelectCardProps>(
           className
         )}
         onClick={disabled ? undefined : onClick}
+        role="button"
+        aria-pressed={!!selected}
+        aria-disabled={!!disabled}
         {...props}
       >
-        <div className="flex flex-col items-center text-center space-y-3">
+        <div className="flex flex-col items-center justify-center text-center space-y-3 h-full">
           {icon && (
             <div className="text-5xl mb-2">
               {icon}
@@ -61,7 +66,7 @@ const SelectCard = React.forwardRef<HTMLDivElement, SelectCardProps>(
             </svg>
           </div>
         )}
-      </div>
+      </button>
     )
   }
 )
