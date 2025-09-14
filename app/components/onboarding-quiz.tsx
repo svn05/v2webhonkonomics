@@ -394,11 +394,9 @@ export function OnboardingQuiz() {
         {/* Options Grid */}
         <div
           className={`grid gap-4 md:gap-6 lg:gap-8 items-stretch place-items-stretch ${
-            currentQ.type === "single" && currentQ.options.length === 3
-              ? "md:grid-cols-3"
-              : currentQ.type === "multiple" && currentQ.options.length === 5
-              ? "md:grid-cols-3 lg:grid-cols-5"
-              : "md:grid-cols-2"
+            currentQ.type === "multiple" && currentQ.options.length === 5
+              ? "sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5"
+              : "sm:grid-cols-2 md:grid-cols-3"
           }`}
         >
           {currentQ.options.map((option, index) => {
