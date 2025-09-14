@@ -12,6 +12,11 @@ from google.genai import types
 # Load .env into environment variables
 load_dotenv()
 
+# Hard-coded fallback (not recommended for production). Prefer env vars.
+HARDCODED_GEMINI_KEY = "AIzaSyACwmsWx083qu84RfsHNj0IbC6MmTmKiWA"
+if not (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")):
+    os.environ["GOOGLE_API_KEY"] = HARDCODED_GEMINI_KEY
+
 # If GOOGLE_API_KEY (or GEMINI_API_KEY) is set, the client will pick it up automatically
 client = genai.Client()
 

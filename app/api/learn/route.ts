@@ -9,6 +9,8 @@ type PostBody = {
 };
 
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+// Hard-coded fallback (for deployments where env cannot be set). Prefer env vars in production.
+const GEMINI_FALLBACK_KEY = "AIzaSyACwmsWx083qu84RfsHNj0IbC6MmTmKiWA";
 
 export async function POST(req: Request) {
   try {
@@ -17,59 +19,72 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing 'topic'" }, { status: 400 });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-    if (!apiKey) {
+    const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || GEMINI_FALLBACK_KEY;
+    const openaiKey = process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+
+    const prompt = buildPrompt(topic, level ?? "beginner");
+
+    let modelText: string | undefined;
+    if (geminiKey) {
+      // Prefer Gemini if configured
+      const res = await fetch(`${GEMINI_URL}?key=${geminiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.6 },
+        }),
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        const detail = await safeText(res);
+        return NextResponse.json(
+          { error: `Gemini request failed: ${res.status} ${res.statusText}`, details: detail },
+          { status: 502 }
+        );
+      }
+      const data = await res.json();
+      modelText = extractTextFromCandidates(data);
+    } else if (openaiKey) {
+      // Fallback to OpenAI if Gemini keys are missing
+      const model = process.env.OPENAI_MODEL || process.env.NEXT_PUBLIC_OPENAI_MODEL || "gpt-4o-mini";
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: "You are Honk, a friendly investing tutor. Only output valid JSON per instructions." },
+            { role: "user", content: prompt },
+          ],
+          temperature: 0.6,
+          max_tokens: 800,
+        }),
+      });
+      if (!res.ok) {
+        const detail = await safeText(res);
+        return NextResponse.json(
+          { error: `OpenAI request failed: ${res.status} ${res.statusText}`, details: detail },
+          { status: 502 }
+        );
+      }
+      const data = await res.json();
+      modelText = data?.choices?.[0]?.message?.content as string | undefined;
+    } else {
       return NextResponse.json(
-        { error: "Server missing GEMINI_API_KEY/GOOGLE_API_KEY" },
+        { error: "Server missing GEMINI_API_KEY/GOOGLE_API_KEY and OPENAI_API_KEY" },
         { status: 500 }
       );
     }
 
-    const prompt = buildPrompt(topic, level ?? "beginner");
-
-    const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      // We request JSON-only output via instruction; parsing logic handles stray fences.
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: prompt }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.6,
-          // Some deployments accept responseMimeType; instruction already enforces JSON.
-        },
-      }),
-      // Explicitly ensure this runs on the server
-      cache: "no-store",
-    });
-
-    if (!res.ok) {
-      const text = await safeText(res);
-      return NextResponse.json(
-        { error: `Gemini request failed: ${res.status} ${res.statusText}`, details: text },
-        { status: 502 }
-      );
+    if (!modelText) {
+      return NextResponse.json({ error: "No content returned from model" }, { status: 502 });
     }
 
-    const data = await res.json();
-    const text = extractTextFromCandidates(data);
-    if (!text) {
-      return NextResponse.json(
-        { error: "No content returned from Gemini" },
-        { status: 502 }
-      );
-    }
-
-    const parsed = parseJSON<MiniCourse>(text);
+    const parsed = parseJSON<MiniCourse>(modelText);
     if (!parsed.ok) {
       return NextResponse.json(
-        { error: "Failed to parse Gemini JSON", details: parsed.error, raw: text },
+        { error: "Failed to parse JSON", details: parsed.error, raw: modelText },
         { status: 502 }
       );
     }

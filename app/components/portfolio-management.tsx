@@ -32,6 +32,8 @@ type InvestEasePortfolio = {
 
 export function PortfolioManagement() {
   const { user, updateUser } = useAuth()
+  // Some builds may not surface custom fields on the User type; derive locally.
+  const uClientId: string | null = (user as any)?.investEaseClientId ?? null
   const [client, setClient] = useState<InvestEaseClient | null>(null)
   const [portfolios, setPortfolios] = useState<InvestEasePortfolio[]>([])
   const [loading, setLoading] = useState(false)
@@ -162,7 +164,7 @@ export function PortfolioManagement() {
     })
     return {
       strategy: { value: strategy, label: strategyLabel },
-      clientId: user?.investEaseClientId ?? null,
+      clientId: uClientId,
       portfolioIds: portfolios.map((p) => p.id),
       portfolios: details,
       prompt: buildExplainPrompt(strategy),
@@ -426,7 +428,7 @@ export function PortfolioManagement() {
   }
 
   useEffect(() => {
-    if (!user?.investEaseClientId) {
+    if (!uClientId) {
       setClient(null)
       setPortfolios([])
       return
@@ -436,11 +438,11 @@ export function PortfolioManagement() {
     setError(null)
     const base = process.env.NEXT_PUBLIC_BFF_URL || "https://htn2025-508985230aed.herokuapp.com"
     Promise.all([
-      fetch(`${base}/investease/clients/${user.investEaseClientId}`).then(async (r) => {
+      fetch(`${base}/investease/clients/${uClientId}`).then(async (r) => {
         if (!r.ok) throw new Error(await r.text())
         return r.json()
       }),
-      fetch(`${base}/investease/clients/${user.investEaseClientId}/portfolios`).then(async (r) => {
+      fetch(`${base}/investease/clients/${uClientId}/portfolios`).then(async (r) => {
         if (!r.ok) throw new Error(await r.text())
         return r.json()
       }),
@@ -468,7 +470,7 @@ export function PortfolioManagement() {
     return () => {
       cancelled = true
     }
-  }, [user?.investEaseClientId])
+  }, [uClientId])
 
   if (!user) return null
 
@@ -601,10 +603,10 @@ export function PortfolioManagement() {
             </div>
           </CardHeader>
           <CardContent className="relative">
-            {!user.investEaseClientId && (
+            {!uClientId && (
               <div className="text-sm text-muted-foreground">No client ID yet. Try logging out and back in to initialize.</div>
             )}
-            {user.investEaseClientId && (
+            {uClientId && (
               <div className="space-y-2">
                 {loading && <div className="text-sm">Loading client…</div>}
                 {error && <div className="text-sm text-red-600">{error}</div>}
@@ -624,7 +626,7 @@ export function PortfolioManagement() {
                     </div>
                   </div>
                 )}
-                {!loading && !error && user.investEaseClientId && (
+                {!loading && !error && uClientId && (
                   <div className="mt-4 border-t pt-4">
                     <div className="rbc-heading-sm mb-2">Add Cash</div>
                     <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
@@ -651,12 +653,12 @@ export function PortfolioManagement() {
                             setError(`Deposit exceeds CAD max. Max is ${formatMoney(1_000_000)} (~${new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(maxInDisplay)} ${displayCurrency}).`)
                             return
                           }
-                          if (!user.investEaseClientId) return
+                          if (!uClientId) return
                           setError(null)
                           setDepositBusy(true)
                           try {
                             const base = process.env.NEXT_PUBLIC_BFF_URL || "https://htn2025-508985230aed.herokuapp.com"
-                            const res = await fetch(`${base}/investease/clients/${user.investEaseClientId}/deposit`, {
+                            const res = await fetch(`${base}/investease/clients/${uClientId}/deposit`, {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
                               // Convert from selected currency to CAD for the API
@@ -669,11 +671,11 @@ export function PortfolioManagement() {
                             // Refetch client and portfolios to reflect new cash
                             setLoading(true)
                             const [c, ps] = await Promise.all([
-                              fetch(`${base}/investease/clients/${user.investEaseClientId}`).then(async (r) => {
+                              fetch(`${base}/investease/clients/${uClientId}`).then(async (r) => {
                                 if (!r.ok) throw new Error(await r.text())
                                 return r.json()
                               }),
-                              fetch(`${base}/investease/clients/${user.investEaseClientId}/portfolios`).then(async (r) => {
+                              fetch(`${base}/investease/clients/${uClientId}/portfolios`).then(async (r) => {
                                 if (!r.ok) throw new Error(await r.text())
                                 return r.json()
                               }),
@@ -736,10 +738,10 @@ export function PortfolioManagement() {
             </div>
           </CardHeader>
           <CardContent>
-            {!user.investEaseClientId && (
+            {!uClientId && (
               <div className="text-sm text-muted-foreground">No client ID yet. Try logging out and back in to initialize.</div>
             )}
-            {user.investEaseClientId && (
+            {uClientId && (
               <>
                 <div className="space-y-3">
                   {/* Simulate your future */}
@@ -765,12 +767,12 @@ export function PortfolioManagement() {
                               setError('Enter months between 1 and 12')
                               return
                             }
-                            if (!user.investEaseClientId) return
+                            if (!uClientId) return
                             setError(null)
                             setSimulateBusy(true)
                             try {
                               const base = process.env.NEXT_PUBLIC_BFF_URL || 'https://htn2025-508985230aed.herokuapp.com'
-                              const res = await fetch(`${base}/investease/client/${user.investEaseClientId}/simulate`, {
+                              const res = await fetch(`${base}/investease/client/${uClientId}/simulate`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ months: m }),
@@ -783,8 +785,8 @@ export function PortfolioManagement() {
                               }
                               // Also refresh client cash & portfolio list values in case they changed
                               const [c, ps] = await Promise.all([
-                                fetch(`${base}/investease/clients/${user.investEaseClientId}`).then(async (r) => { if (!r.ok) throw new Error(await r.text()); return r.json() }),
-                                fetch(`${base}/investease/clients/${user.investEaseClientId}/portfolios`).then(async (r) => { if (!r.ok) throw new Error(await r.text()); return r.json() }),
+                                fetch(`${base}/investease/clients/${uClientId}`).then(async (r) => { if (!r.ok) throw new Error(await r.text()); return r.json() }),
+                                fetch(`${base}/investease/clients/${uClientId}/portfolios`).then(async (r) => { if (!r.ok) throw new Error(await r.text()); return r.json() }),
                               ])
                               setClient(c)
                               setPortfolios(Array.isArray(ps) ? ps : [])
@@ -912,8 +914,8 @@ export function PortfolioManagement() {
                                                 if (!res.ok) throw new Error(await res.text())
                                                 // Clear input, refresh client cash and this portfolio's details
                                                 setTransferAmounts((prev) => ({ ...prev, [wid]: '' }))
-                                                const [c, dref] = await Promise.all([
-                                                  fetch(`${base}/investease/clients/${user.investEaseClientId}`).then(async (r) => { if (!r.ok) throw new Error(await r.text()); return r.json() }),
+                                              const [c, dref] = await Promise.all([
+                                                fetch(`${base}/investease/clients/${uClientId}`).then(async (r) => { if (!r.ok) throw new Error(await r.text()); return r.json() }),
                                                   fetch(`${base}/investease/portfolios/${wid}`).then(async (r) => { if (!r.ok) throw new Error(await r.text()); return r.json() }),
                                                 ])
                                                 setClient(c)
@@ -973,8 +975,8 @@ export function PortfolioManagement() {
                                                 if (!res.ok) throw new Error(await res.text())
                                                 // Clear input, refresh client cash and this portfolio's details
                                                 setWithdrawAmounts((prev) => ({ ...prev, [wid]: '' }))
-                                                const [c, dref] = await Promise.all([
-                                                  fetch(`${base}/investease/clients/${user.investEaseClientId}`).then(async (r) => { if (!r.ok) throw new Error(await r.text()); return r.json() }),
+                                              const [c, dref] = await Promise.all([
+                                                fetch(`${base}/investease/clients/${uClientId}`).then(async (r) => { if (!r.ok) throw new Error(await r.text()); return r.json() }),
                                                   fetch(`${base}/investease/portfolios/${wid}`).then(async (r) => { if (!r.ok) throw new Error(await r.text()); return r.json() }),
                                                 ])
                                                 setClient(c)
@@ -1188,7 +1190,7 @@ export function PortfolioManagement() {
                         <button
                           disabled={createBusy}
                           onClick={async () => {
-                            if (!user.investEaseClientId) return
+                          if (!uClientId) return
                             const amt = Number(createAmount)
                             const cash = Number(client?.cash ?? 0)
                             const allowed = STRATEGIES.map((s) => s.value)
@@ -1208,7 +1210,7 @@ export function PortfolioManagement() {
                             setCreateBusy(true)
                             try {
                               const base = process.env.NEXT_PUBLIC_BFF_URL || "https://htn2025-508985230aed.herokuapp.com"
-                              const res = await fetch(`${base}/investease/clients/${user.investEaseClientId}/portfolios`, {
+                            const res = await fetch(`${base}/investease/clients/${uClientId}/portfolios`, {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({ type: createStrategy, initialAmount: amt }),
@@ -1219,12 +1221,12 @@ export function PortfolioManagement() {
                               setCreateAmount("")
                               // Refetch to update cash and portfolio list
                               setLoading(true)
-                              const [c, ps] = await Promise.all([
-                                fetch(`${base}/investease/clients/${user.investEaseClientId}`).then(async (r) => {
+                            const [c, ps] = await Promise.all([
+                              fetch(`${base}/investease/clients/${uClientId}`).then(async (r) => {
                                   if (!r.ok) throw new Error(await r.text())
                                   return r.json()
                                 }),
-                                fetch(`${base}/investease/clients/${user.investEaseClientId}/portfolios`).then(async (r) => {
+                              fetch(`${base}/investease/clients/${uClientId}/portfolios`).then(async (r) => {
                                   if (!r.ok) throw new Error(await r.text())
                                   return r.json()
                                 }),

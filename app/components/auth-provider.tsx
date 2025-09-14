@@ -64,6 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
 
+      const base = process.env.NEXT_PUBLIC_BFF_URL || "https://htn2025-508985230aed.herokuapp.com"
+      
       // 1) Try to find an existing client by email
       const listRes = await fetch(`${base}/investease/clients`)
       if (!listRes.ok) {
@@ -76,66 +78,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const cid = match.id as string
             // Persist to DB profile by email (best-effort)
             try {
-              await fetch(`${base}account/set-investease`, {
+              await fetch(`${base}/account/set-investease`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, investEaseClientId: cid }),
               })
             } catch {}
-            return cid
+            return true
           }
         }
       }
 
       // 2) Create a new client with cash=0
       const createRes = await fetch(`${base}/investease/clients`, {
-
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ 
+          email, 
+          name: email.split("@")[0],
+          cash: 0 
+        }),
       });
-      if (!res.ok) {
+      if (!createRes.ok) {
         console.log("Login failed: response not ok");
         return false;
       }
 
-      const created = await createRes.json()
-      const cid = created?.id as string
+      const created = await createRes.json();
+      const cid = created?.id as string;
       if (cid) {
         try {
-          await fetch(`${base}account/set-investease`, {
+          await fetch(`${base}/account/set-investease`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, investEaseClientId: cid }),
-          })
-        } catch {}
+          });
+          
+          const userObj: User = {
+            id: cid,
+            email: email,
+            name: email.split("@")[0],
+            honkPoints: 0,
+            goldenEggs: 0,
+            streak: 0,
+            level: 1,
+            gooseAccessories: ["basic"],
+            portfolioType: "",
+            riskTolerance: "moderate",
+            investmentGoals: [],
+            experienceLevel: "beginner",
+            hasCompletedOnboarding: false,
+          };
+          setUser(userObj);
+          localStorage.setItem("honkonomics_user", JSON.stringify(userObj));
+          console.log("Login successful, user set");
+          return true;
+        } catch (e) {
+          console.error("Failed to set InvestEase client ID:", e);
+          return false;
+        }
       }
-      return cid
-
-      const data = await res.json();
-      console.log("Login response:", data);
-      if (data && data.user_id && data.email) {
-        const userObj: User = {
-          id: data.user_id,
-          email: data.email,
-          name: data.email.split("@")[0],
-          honkPoints: 0,
-          goldenEggs: 0,
-          streak: 0,
-          level: 1,
-          gooseAccessories: ["basic"],
-          portfolioType: "",
-          riskTolerance: "moderate",
-          investmentGoals: [],
-          experienceLevel: "beginner",
-          hasCompletedOnboarding: false,
-        };
-        setUser(userObj);
-        localStorage.setItem("honkonomics_user", JSON.stringify(userObj));
-        console.log("Login successful, user set");
-        return true;
-      }
-      console.log("Login failed: missing user_id or email");
+      console.log("Login failed: could not create InvestEase client");
       return false;
 
     } catch (e) {
