@@ -420,7 +420,6 @@ export function OnboardingQuiz() {
                   </div>
                 )}
                 <SelectCard
-                  className="h-full"
                   selected={isSelected}
                   icon={option.icon}
                   title={option.label}
