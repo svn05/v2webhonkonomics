@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import { useAuth } from "./auth-provider"
 import { Button } from "@/components/ui/button"
+import { loadAICourses } from "@/lib/ai-courses"
 
 interface Lesson {
   id: number
@@ -169,35 +170,73 @@ export function LearningPath({ onStartLesson }: { onStartLesson: (moduleId: stri
   // Load and compute progress/locks
   useEffect(() => {
     if (!user?.id) return;
-    let saved: Record<string, number> = {}
-    try {
-      const raw = localStorage.getItem(`honk_progress_${user.id}`)
-      if (raw) saved = JSON.parse(raw)
-    } catch {}
+    const recompute = () => {
+      let saved: Record<string, number> = {}
+      try {
+        const raw = localStorage.getItem(`honk_progress_${user.id}`)
+        if (raw) saved = JSON.parse(raw)
+      } catch {}
 
-    // Build lessons with progress and locks based on completion sequentially
-    const computed: Lesson[] = baseLessons.map(l => ({ ...l }))
-    let prevCompleted = true
-    for (let i = 0; i < computed.length; i++) {
-      const l = computed[i]
-      const p = l.moduleId ? (saved[l.moduleId] ?? l.progress) : l.progress
-      l.progress = p
-      const completed = p >= 100 || l.completed
-      l.completed = completed
-      l.locked = i === 0 ? false : !prevCompleted
-      prevCompleted = completed
+      // Base lessons
+      const computed: Lesson[] = baseLessons.map(l => ({ ...l }))
+
+      // Append AI courses as unlocked lessons
+      const ai = loadAICourses(user.id)
+      const startId = computed.length > 0 ? computed[computed.length - 1].id + 1 : 1
+      ai.forEach((sc, idx) => {
+        computed.push({
+          id: startId + idx,
+          title: sc.course.title,
+          description: sc.course.overview,
+          points: Math.max(20, sc.course.lessons.length * 10),
+          progress: 0,
+          locked: false,
+          completed: false,
+          moduleId: sc.id,
+        })
+      })
+
+      // Compute progress and locks; AI lessons are never locked by sequence
+      let prevCompleted = true
+      for (let i = 0; i < computed.length; i++) {
+        const l = computed[i]
+        const p = l.moduleId ? (saved[l.moduleId] ?? l.progress) : l.progress
+        l.progress = p
+        const completed = p >= 100 || l.completed
+        l.completed = completed
+        if (l.moduleId && l.moduleId.startsWith("ai:")) {
+          l.locked = false
+        } else {
+          l.locked = i === 0 ? false : !prevCompleted
+          prevCompleted = completed
+        }
+      }
+      setLessons(computed)
+
+      // Focus the first incomplete unlocked lesson
+      const firstIncomplete = computed.find(l => !l.completed) || computed[computed.length - 1]
+      setCurrentLesson(firstIncomplete?.id || 1)
     }
-    setLessons(computed)
 
-    // Focus the first incomplete unlocked lesson
-    const firstIncomplete = computed.find(l => !l.completed) || computed[computed.length - 1]
-    setCurrentLesson(firstIncomplete?.id || 1)
+    recompute()
+    const onUpdate = (e: any) => { try { if (e?.detail?.userId && user?.id && e.detail.userId === user.id) recompute() } catch {} }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('ai-courses:updated', onUpdate as any)
+      window.addEventListener('honk-progress:updated', onUpdate as any)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('ai-courses:updated', onUpdate as any)
+        window.removeEventListener('honk-progress:updated', onUpdate as any)
+      }
+    }
   }, [user?.id])
 
   return (
     <div className="relative w-full bg-gradient-to-b from-sky-100 to-sky-50 rounded-xl overflow-hidden border border-foreground/20" style={{ height: '400px' }}>
-      {/* Sky Background Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-sky-200/30 via-sky-100/20 to-transparent" />
+      {/* Background image + lighter overlay for better visibility */}
+      <Image src="/journeybackground.png" alt="Journey Background" fill className="object-cover opacity-25 pointer-events-none select-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-sky-200/20 via-sky-100/10 to-transparent" />
       
       {/* Scrollable Path Container */}
       <div 
@@ -313,9 +352,11 @@ export function LearningPath({ onStartLesson }: { onStartLesson: (moduleId: stri
 
                 {/* Hover Tooltip */}
                 {hoveredLesson === lesson.id && (
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-foreground text-background px-3 py-2 rounded-lg text-sm whitespace-nowrap z-10">
-                    <div className="font-semibold">{lesson.title}</div>
-                    <div className="text-xs opacity-90">{lesson.description}</div>
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-foreground text-background px-3 py-2 rounded-lg text-sm z-10 shadow-lg max-w-md w-max">
+                    <div className="font-semibold truncate max-w-md">{lesson.title}</div>
+                    <div className="text-xs opacity-90 mt-1 break-words" style={{ display: '-webkit-box', WebkitLineClamp: 2 as any, WebkitBoxOrient: 'vertical' as any, overflow: 'hidden' }}>
+                      {lesson.description}
+                    </div>
                     <div className="text-xs mt-1 flex items-center gap-1">
                       <Image src="/honk_point.png" alt="Points" width={12} height={12} />
                       <span>{lesson.points} points</span>

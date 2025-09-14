@@ -15,6 +15,15 @@ interface User {
   streak: number
   level: number
   gooseAccessories: string[]
+  gooseTuning?: {
+    gooseY: number
+    gooseScale: number
+    hatY: number
+    hatDeg: number
+  }
+  equippedHat?: string
+  equippedAccessory?: string
+  equippedBackground?: string
   portfolioType: string
   riskTolerance: "conservative" | "moderate" | "aggressive"
   investmentGoals: string[]
@@ -37,6 +46,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+
+  const computeLevel = (points: number | undefined): number => {
+    const p = Math.max(0, points ?? 0)
+    // Simple mapping: every 200 points → +1 level. 0–199 => 1, 200–399 => 2, etc.
+    return Math.floor(p / 200) + 1
+  }
 
   useEffect(() => {
     // Check for existing session
@@ -63,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user?.email])
 
   const ensureInvestEaseClient = async (name: string, email: string): Promise<string | undefined> => {
-    const base = "http://localhost:8000"
+    const base = process.env.NEXT_PUBLIC_BFF_URL || "http://localhost:8000"
     try {
       // 1) Try to find an existing client by email
       const listRes = await fetch(`${base}/investease/clients`)
@@ -108,8 +123,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         honkPoints: 100,
         goldenEggs: 5,
         streak: 1,
-        level: 1,
-        gooseAccessories: ["basic"],
+        level: computeLevel(100),
+        gooseAccessories: ["basic", "rbchat"],
+        gooseTuning: { gooseY: 16, gooseScale: 1.0, hatY: 24, hatDeg: 0 },
+        equippedHat: "rbchat",
+        equippedAccessory: "none",
+        equippedBackground: "default",
         portfolioType: "",
         riskTolerance: "moderate",
         investmentGoals: [],
@@ -135,8 +154,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         honkPoints: 50,
         goldenEggs: 2,
         streak: 0,
-        level: 1,
-        gooseAccessories: ["basic"],
+        level: computeLevel(50),
+        gooseAccessories: ["basic", "rbchat"],
+        gooseTuning: { gooseY: 16, gooseScale: 1.0, hatY: 24, hatDeg: 0 },
+        equippedHat: "rbchat",
+        equippedAccessory: "none",
+        equippedBackground: "default",
         portfolioType: "",
         riskTolerance: "moderate",
         investmentGoals: [],
@@ -157,7 +180,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateUser = (updates: Partial<User>) => {
     if (user) {
-      const updatedUser = { ...user, ...updates }
+      const merged = { ...user, ...updates }
+      // Auto-compute level from honkPoints
+      merged.level = computeLevel(merged.honkPoints)
+      const updatedUser = merged
       if (updates.portfolioType) {
         updatedUser.hasCompletedOnboarding = true
       }

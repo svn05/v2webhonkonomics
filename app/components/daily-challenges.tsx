@@ -265,8 +265,14 @@ export function DailyChallenges() {
                   </div>
                   <p className="text-muted-foreground mb-3">{challenge.description}</p>
                   <div className="flex items-center gap-4 text-sm">
-                    <span className="flex items-center gap-1">🪙 {challenge.pointsReward} points</span>
-                    <span className="flex items-center gap-1">🥚 Bonus for 80%+ score</span>
+                    <span className="flex items-center gap-1">
+                      <Image src="/honk_point.png" alt="Honk Points" width={16} height={16} />
+                      {challenge.pointsReward} points
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Image src="/golden_egg.png" alt="Golden Egg" width={16} height={16} />
+                      Bonus for 80%+ score
+                    </span>
                   </div>
                 </div>
                 <div className="ml-4">
@@ -310,9 +316,41 @@ function StockOrNotGame({
   const [showResult, setShowResult] = useState(false)
   const [selectedAnswer, setSelectedAnswer] = useState<boolean | null>(null)
   const [showBurst, setShowBurst] = useState(false)
+  const [countdown, setCountdown] = useState(3)
 
   const currentQuestion = stockOrNotQuestions[currentIndex]
   const progress = ((currentIndex + 1) / stockOrNotQuestions.length) * 100
+
+  // 3-second answer window per question. Auto-fail if timer hits 0 without an answer.
+  useEffect(() => {
+    if (showResult) return
+    setCountdown(3)
+    const t = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          clearInterval(t)
+          // If no answer chosen when time runs out, mark as incorrect and advance after showing result
+          if (!showResult && selectedAnswer === null) {
+            // Show result as incorrect
+            setShowResult(true)
+            setTimeout(() => {
+              if (currentIndex < stockOrNotQuestions.length - 1) {
+                setCurrentIndex(currentIndex + 1)
+                setShowResult(false)
+                setSelectedAnswer(null)
+              } else {
+                const finalScore = Math.round((score / stockOrNotQuestions.length) * 100)
+                onComplete(finalScore, challenge)
+              }
+            }, 2000)
+          }
+          return 0
+        }
+        return c - 1
+      })
+    }, 1000)
+    return () => clearInterval(t)
+  }, [currentIndex, showResult])
 
   const handleAnswer = (isReal: boolean) => {
     setSelectedAnswer(isReal)
@@ -352,7 +390,10 @@ function StockOrNotGame({
           </div>
           <Progress value={progress} className="mb-4" />
           <CardTitle className="text-center">{challenge.title}</CardTitle>
-          <CardDescription className="text-center">Is this a real stock ticker symbol?</CardDescription>
+          <CardDescription className="text-center">
+            Is this a real stock ticker symbol?
+            <span className="ml-2 text-primary font-medium">Time left: {countdown}s</span>
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="text-center relative">
