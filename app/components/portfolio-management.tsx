@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { useAuth } from "./auth-provider"
 
+
 type InvestEaseClient = {
   id: string
   name?: string
@@ -50,6 +51,10 @@ export function PortfolioManagement() {
   const [transferOpen, setTransferOpen] = useState<Record<string, boolean>>({})
   const [simulateMonths, setSimulateMonths] = useState<string>("6")
   const [simulateBusy, setSimulateBusy] = useState<boolean>(false)
+  const [explainOpen, setExplainOpen] = useState<boolean>(false)
+  const [explainChoice, setExplainChoice] = useState<string | null>(null)
+  const [explainBusy, setExplainBusy] = useState<boolean>(false)
+  const [explainMsg, setExplainMsg] = useState<string>("")
   const [showSimulate, setShowSimulate] = useState<boolean>(false)
 
   const STRATEGIES: { value: string; label: string; description: string; target: string }[] = [
@@ -59,6 +64,8 @@ export function PortfolioManagement() {
     { value: "conservative", label: "RBC Conservative", description: "Low-medium risk, steady growth", target: "4–7% annually" },
     { value: "very_conservative", label: "RBC Very Conservative", description: "Low risk, capital preservation focused", target: "2–5% annually" },
   ]
+
+  // LLM wiring lives below via fetch; no client SDK used in-browser
 
   // Human-friendly label for strategy values like "balanced" or "aggressive_growth"
   const strategyValueToLabel = (val: any): string | undefined => {
@@ -125,7 +132,98 @@ export function PortfolioManagement() {
     return amountInDisplay / rate
   }
 
-  // Fetch live exchange rates from Bank of Canada Valet API
+  // ---------- LLM helpers for "Explain My Portfolio" ----------
+  const buildExplainPrompt = (strategy: string) => {
+    const choiceLabel = strategyValueToLabel(strategy) || strategy
+    const summary = portfolios
+      .map((p) => {
+        const d = portfolioDetails[p.id]
+        const name = p.name || p.type || 'Portfolio'
+        const val = typeof d?.current_value === 'number' ? d.current_value : (typeof p?.current_value === 'number' ? p.current_value : 0)
+        const inv = typeof d?.invested_amount === 'number' ? d.invested_amount : (typeof p?.invested_amount === 'number' ? p.invested_amount : 0)
+        return `- ${name}: value ${val}, invested ${inv}`
+      })
+      .join('\n')
+    return (
+      `You are an investing coach. The user selected the strategy: ${choiceLabel}. Attached are details about RBC's portfolios make up: \n` +
+      `Summarize this strategy and what qualities of commodities are reflected in the strategy including risk, asset mix, expected volatility, time horizon and past returns. The focus is on the asset mix. You must give atleast three examples of a asset/etf/commodity that are in the portfolio.\n` +
+      `Keep it concise 70-90 words).\n\n` +
+      `User portfolios (value, invested):\n${summary || '- none'}\n`
+    )
+  }
+
+  const buildExplainPayload = (strategy: string) => {
+    const strategyLabel = strategyValueToLabel(strategy) || strategy
+    const details = portfolios.map((p) => {
+      const d = portfolioDetails[p.id]
+      const value = typeof d?.current_value === 'number' ? d.current_value : (typeof p?.current_value === 'number' ? p.current_value : 0)
+      const invested = typeof d?.invested_amount === 'number' ? d.invested_amount : (typeof p?.invested_amount === 'number' ? p.invested_amount : 0)
+      return { id: p.id, name: p.name || p.type || 'Portfolio', value, invested, type: p.type }
+    })
+    return {
+      strategy: { value: strategy, label: strategyLabel },
+      clientId: user?.investEaseClientId ?? null,
+      portfolioIds: portfolios.map((p) => p.id),
+      portfolios: details,
+      prompt: buildExplainPrompt(strategy),
+    }
+  }
+
+  const requestExplainLLM = async (strategy: string) => {
+    const customEndpoint = process.env.NEXT_PUBLIC_LLM_ENDPOINT
+    const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
+    const model = process.env.NEXT_PUBLIC_OPENAI_MODEL || 'gpt-4o-mini'
+    const prompt = buildExplainPrompt(strategy)
+    const payload = buildExplainPayload(strategy)
+    // Attempt to attach a reference markdown from /public if present
+    let referenceMd: string | null = null
+    try {
+      const r = await fetch('/rbc_portfolios_summary.md', { headers: { Accept: 'text/markdown, text/plain' } })
+      if (r.ok) referenceMd = await r.text()
+    } catch {}
+    if (customEndpoint) {
+      const r = await fetch(customEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model, referenceMd, referenceMdName: 'rbc_portfolios_summary.md', ...payload }),
+      })
+      if (!r.ok) throw new Error(await r.text())
+      const data = await r.json().catch(() => null)
+      return typeof data?.message === 'string' ? data.message : JSON.stringify(data)
+    }
+    if (apiKey) {
+      const r = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: (
+            [ { role: 'system', content: 'You are a helpful investing coach that explains RBC\'s portfolios.' } ]
+            .concat(referenceMd ? [{ role: 'system', content: `Reference document (rbc_portfolios_summary.md):\n\n${referenceMd}` }] : [])
+            .concat([{ role: 'user', content: prompt }])
+          ),
+          temperature: 0.5,
+          max_tokens: 1000,
+        }),
+      })
+      if (!r.ok) throw new Error(await r.text())
+      const data = await r.json()
+      const msg = data?.choices?.[0]?.message?.content
+      return typeof msg === 'string' ? msg : JSON.stringify(data)
+    }
+    throw new Error('No LLM configured. Set NEXT_PUBLIC_LLM_ENDPOINT or NEXT_PUBLIC_OPENAI_API_KEY.')
+  }
+
+  // Reset explain panel state whenever it is opened or closed
+  useEffect(() => {
+    setExplainChoice(null)
+    setExplainMsg("")
+    setExplainBusy(false)
+  }, [explainOpen])
+
   useEffect(() => {
     const from: CurrencyCode = displayCurrency === 'CAD' ? 'CAD' : displayCurrency
     const to: CurrencyCode = displayCurrency === 'CAD' ? 'USD' : 'CAD'
@@ -392,7 +490,7 @@ export function PortfolioManagement() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <Image src="/rbc-shield.svg" alt="RBC" width={48} height={48} className="rbc-logo" />
+                <Image src="/RBCGoose.png" alt="RBC" width={48} height={48} className="rbc-logo" />
                 <div>
                   <h3 className="rbc-heading-sm">Need help understanding your portfolio?</h3>
                   <p className="rbc-muted">We can summarize your asset mix, risk level and opportunities.</p>
@@ -400,15 +498,68 @@ export function PortfolioManagement() {
               </div>
               <button
                 className="rbc-btn"
-                onClick={() => {
-                  console.log("Explaining portfolio")
-                }}
+                onClick={() => setExplainOpen((v) => !v)}
+                aria-expanded={explainOpen}
+                aria-controls="rbc-explain-card"
+                title="Explain my portfolio"
               >
                 Explain My Portfolio
               </button>
             </div>
           </CardContent>
         </Card>
+
+        {explainOpen && (
+          <Card id="rbc-explain-card" className="rbc-card rbc-explain-card">
+            <CardContent className="p-4 relative">
+              <div className="rbc-explain-grid">
+                <div className="rbc-explain-left">
+                  <Image src="/goose_glasses.png" alt="Professor Goose" width={180} height={180} className="rbc-explain-img" />
+                </div>
+                <div className="rbc-explain-right">
+                  {!explainChoice ? (
+                    <>
+                      <div className="rbc-heading-sm mb-3">Choose a strategy to focus the explanation</div>
+                      <div className="rbc-choices">
+                        {STRATEGIES.map((s) => (
+                          <button
+                            key={s.value}
+                            className="rbc-choice"
+                            onClick={async () => {
+                              setExplainChoice(s.value)
+                              setExplainBusy(true)
+                              setExplainMsg("")
+                              try {
+                                const out = await requestExplainLLM(s.value)
+                                setExplainMsg(out)
+                              } catch (e: any) {
+                                setExplainMsg(typeof e?.message === 'string' ? e.message : 'Failed to request explanation')
+                              } finally {
+                                setExplainBusy(false)
+                              }
+                            }}
+                          >
+                            <div className="rbc-choice-title">{s.label}</div>
+                            <div className="rbc-choice-desc">{s.description} — target {s.target}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="rbc-heading-sm">Selected: {strategyValueToLabel(explainChoice) || explainChoice}</div>
+                      <div className="text-sm rbc-muted">{explainBusy ? 'Requesting analysis…' : (explainMsg || 'Your choice has been saved.')} </div>
+                      <button className="rbc-btn rbc-btn--secondary" onClick={() => { setExplainChoice(null); setExplainMsg("") }}>
+                        Change selection
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="rbc-explain-powered">powered by OPENAI</div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="rbc-card">
           <CardHeader>
@@ -1163,6 +1314,20 @@ export function PortfolioManagement() {
         .rbc-rate-text { font-size:12px; opacity:.9; }
         .rbc-rate-val { color: var(--rbc-blue); margin-left:4px; }
         .rbc-dot { width:8px; height:8px; border-radius:50%; background:#10b981; box-shadow:0 0 0 2px #ecfdf5 inset; }
+        .rbc-explain-card { overflow: hidden; }
+        .rbc-explain-grid { display: grid; grid-template-columns: 200px 1fr; gap: 16px; align-items: start; }
+        @media (max-width: 640px) { .rbc-explain-grid { grid-template-columns: 1fr; } }
+        .rbc-explain-left { display:flex; align-items:center; justify-content:center; padding: 8px; }
+        .rbc-explain-img { border-radius: 12px; }
+        .rbc-explain-right { padding: 4px; }
+        .rbc-choices { display:flex; flex-direction:column; gap:10px; }
+        .rbc-choice { text-align:left; background:#fff; border:1px solid #E5EAF0; border-radius:10px; padding:10px 12px; box-shadow:0 1px 2px rgba(0,0,0,.03); cursor:pointer; transition: box-shadow .15s ease, transform .05s ease, border-color .15s ease; }
+        .rbc-choice:hover { box-shadow:0 4px 12px rgba(0,0,0,.08); transform: translateY(-1px); border-color: var(--rbc-blue); }
+        .rbc-choice-title { font-weight: 700; color:#102A43; }
+        .rbc-choice-desc { font-size: 12px; color:#5B7083; margin-top:2px; }
+        .rbc-explain-powered { position:absolute; right:12px; bottom:1px; font-size: 11px; color:#94A3B8; letter-spacing:.02em; }
+        .rbc-linklike { color: var(--rbc-blue); border: 0; background: transparent; cursor: pointer; padding: 0; font: inherit; }
+        .rbc-linklike:hover { text-decoration: underline; }
       `}</style>
     </div>
   )
