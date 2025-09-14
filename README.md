@@ -1,4 +1,4 @@
 ## Running the app:
 - `npm install`
 - `npm run dev`
- hi
+- 'python -m uvicorn supabase_api:app --reload --port 8001'
