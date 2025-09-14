@@ -397,9 +397,9 @@ export function OnboardingQuiz() {
         </div>
 
         {currentQ.subtitle && (
-          <p className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <div className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto">
             {currentQ.subtitle}
-          </p>
+          </div>
         )}
 
         {/* Options Grid */}

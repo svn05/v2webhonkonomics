@@ -77,15 +77,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const match = clients.find((c: any) => typeof c?.email === "string" && c.email.toLowerCase() === email.toLowerCase())
           if (match?.id) {
             const cid = match.id as string
-            // Persist to DB profile by email (best-effort)
-            try {
-              await fetch(`${base}/account/set-investease`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, investEaseClientId: cid }),
-              })
-            } catch {}
-
             // Ensure local user state is set so the UI can load portfolios
             const existingSaved = localStorage.getItem("honkonomics_user")
             let prevUser: Partial<User> | null = null
@@ -136,13 +127,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const created = await createRes.json();
       const cid = created?.id as string;
       if (cid) {
-        try {
-          await fetch(`${base}/account/set-investease`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, investEaseClientId: cid }),
-          });
-          
           const userObj: User = {
             id: cid,
             email: email,
@@ -163,10 +147,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.setItem("honkonomics_user", JSON.stringify(userObj));
           console.log("Login successful, user set");
           return true;
-        } catch (e) {
-          console.error("Failed to set InvestEase client ID:", e);
-          return false;
-        }
       }
       console.log("Login failed: could not create InvestEase client");
       return false;
