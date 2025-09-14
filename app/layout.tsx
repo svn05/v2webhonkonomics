@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth-provider";
 import { Suspense } from "react";
+import { A11yToggles } from "@/components/a11y-toggles";
 
 export const metadata: Metadata = {
   title: "Honkonomics - Learn Investing with Canada Goose",
@@ -30,6 +31,7 @@ export default function RootLayout({
             <div id="main-content">{children}</div>
           </AuthProvider>
         </Suspense>
+        <A11yToggles />
         <Analytics />
       </body>
     </html>
