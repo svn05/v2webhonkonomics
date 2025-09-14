@@ -88,7 +88,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const clients = await listRes.json()
         if (Array.isArray(clients)) {
           const match = clients.find((c: any) => typeof c?.email === "string" && c.email.toLowerCase() === email.toLowerCase())
-          if (match?.id) return match.id as string
+          if (match?.id) {
+            const cid = match.id as string
+            // Persist to DB profile by email (best-effort)
+            try {
+              await fetch(`${base}account/set-investease`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, investEaseClientId: cid }),
+              })
+            } catch {}
+            return cid
+          }
         }
       }
 
@@ -103,7 +114,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return undefined
       }
       const created = await createRes.json()
-      return created?.id as string
+      const cid = created?.id as string
+      if (cid) {
+        try {
+          await fetch(`${base}account/set-investease`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, investEaseClientId: cid }),
+          })
+        } catch {}
+      }
+      return cid
     } catch (e) {
       console.error("ensureInvestEaseClient error", e)
       return undefined

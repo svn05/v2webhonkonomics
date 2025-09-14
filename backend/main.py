@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Optional
 
 import httpx
+from account import router as account_router
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import HTTPException
@@ -29,6 +30,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount account/profile routes
+app.include_router(account_router, prefix="/account")
 
 _token: Optional[str] = PRESEEDED_JWT
 
@@ -68,4 +72,3 @@ async def investease_proxy(request: Request, path: str):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
-
