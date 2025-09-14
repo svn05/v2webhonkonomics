@@ -31,7 +31,7 @@ type InvestEasePortfolio = {
 }
 
 export function PortfolioManagement() {
-  const { user } = useAuth()
+  const { user, updateUser } = useAuth()
   const [client, setClient] = useState<InvestEaseClient | null>(null)
   const [portfolios, setPortfolios] = useState<InvestEasePortfolio[]>([])
   const [loading, setLoading] = useState(false)
