@@ -63,8 +63,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      console.log("Login called with", email);
-      const res = await fetch("http://localhost:8001/login", {
+
+      // 1) Try to find an existing client by email
+      const listRes = await fetch(`${base}/investease/clients`)
+      if (!listRes.ok) {
+        console.error("List clients failed", await listRes.text())
+      } else {
+        const clients = await listRes.json()
+        if (Array.isArray(clients)) {
+          const match = clients.find((c: any) => typeof c?.email === "string" && c.email.toLowerCase() === email.toLowerCase())
+          if (match?.id) {
+            const cid = match.id as string
+            // Persist to DB profile by email (best-effort)
+            try {
+              await fetch(`${base}account/set-investease`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, investEaseClientId: cid }),
+              })
+            } catch {}
+            return cid
+          }
+        }
+      }
+
+      // 2) Create a new client with cash=0
+      const createRes = await fetch(`${base}/investease/clients`, {
+
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -73,6 +98,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log("Login failed: response not ok");
         return false;
       }
+
+      const created = await createRes.json()
+      const cid = created?.id as string
+      if (cid) {
+        try {
+          await fetch(`${base}account/set-investease`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, investEaseClientId: cid }),
+          })
+        } catch {}
+      }
+      return cid
+
       const data = await res.json();
       console.log("Login response:", data);
       if (data && data.user_id && data.email) {
@@ -98,6 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       console.log("Login failed: missing user_id or email");
       return false;
+
     } catch (e) {
       console.error("Login error:", e);
       return false;
