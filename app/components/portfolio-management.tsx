@@ -272,52 +272,45 @@ export function PortfolioManagement() {
   if (!user) return null
 
   return (
-    <div className="relative min-h-screen">
-      <div className="fixed inset-0 z-0">
-        <Image src="/background3.png" alt="Background" fill className="object-cover opacity-20" priority />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/70 to-background/95" />
+    <div className="rbc-theme">
+      <div className="rbc-hero">
+        <div className="rbc-hero-inner">
+          <Image src="/rbc.png" alt="RBC" width={44} height={44} className="rbc-logo" />
+          <div className="rbc-hero-text">
+            <div className="rbc-product">InvestEase</div>
+            <h1 className="rbc-title">Portfolio Management</h1>
+          </div>
+        </div>
+        <div className="rbc-hero-accent" />
       </div>
-              {/* AI Portfolio Explainer */}
-        <Card className="bg-card/95 backdrop-blur-sm border-2 border-foreground/20">
+
+      <div className="rbc-content max-w-5xl mx-auto p-4 space-y-6">
+        <Card className="rbc-card">
           <CardContent className="p-4">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <Image
-                  src="/goose_glass.png"
-                  alt="Professor Goose"
-                  width={80}
-                  height={80}
-                  className="flex-shrink-0"
-                />
+                <Image src="/rbc.png" alt="RBC" width={48} height={48} className="rbc-logo" />
                 <div>
-                  <h3 className="font-bold text-lg">Need help understanding your portfolio?</h3>
-                  <p className="text-sm text-muted-foreground">I can explain your asset allocation, risk level, and suggest improvements!</p>
+                  <h3 className="rbc-heading-sm">Need help understanding your portfolio?</h3>
+                  <p className="rbc-muted">We can summarize your asset mix, risk level and opportunities.</p>
                 </div>
               </div>
-              <Button
-                variant="brand"
+              <button
+                className="rbc-btn"
                 onClick={() => {
-                  // TODO: Implement AI portfolio explanation
                   console.log("Explaining portfolio")
                 }}
               >
                 Explain My Portfolio
-              </Button>
+              </button>
             </div>
           </CardContent>
         </Card>
 
-      <div className="relative z-10 max-w-5xl mx-auto p-4 space-y-6">
-        <div className="text-center py-4">
-          <div className="text-6xl mb-4">📊</div>
-          <h1 className="text-3xl font-bold mb-2">Portfolio Management</h1>
-          <p className="text-muted-foreground">Your InvestEase sandbox portfolios and cash</p>
-        </div>
-
-        <Card className="bg-card/95 backdrop-blur-sm">
+        <Card className="rbc-card">
           <CardHeader>
-            <CardTitle>Client Overview</CardTitle>
-            <CardDescription>Your current outlook on InvestEase</CardDescription>
+            <CardTitle className="rbc-heading">Client Overview</CardTitle>
+            <CardDescription className="rbc-muted">Your current outlook on InvestEase</CardDescription>
           </CardHeader>
           <CardContent>
             {!user.investEaseClientId && (
@@ -329,24 +322,23 @@ export function PortfolioManagement() {
                 {error && <div className="text-sm text-red-600">{error}</div>}
                 {!loading && !error && client && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <div className="text-xs text-muted-foreground">Cash</div>
-                      <div className="text-2xl font-bold text-primary">${typeof client.cash === 'number' ? client.cash.toLocaleString() : '0'}</div>
+                    <div className="rbc-kpi">
+                      <div className="rbc-kpi-label">Cash</div>
+                      <div className="rbc-kpi-value">${typeof client.cash === 'number' ? client.cash.toLocaleString() : '0'}</div>
                     </div>
-                    <div>
-                      <div className="text-xs text-muted-foreground">Total Portfolio Value</div>
-                      <div className="text-2xl font-bold text-primary">${totalPortfolioValue.toLocaleString()}</div>
+                    <div className="rbc-kpi">
+                      <div className="rbc-kpi-label">Total Portfolio Value</div>
+                      <div className="rbc-kpi-value">${totalPortfolioValue.toLocaleString()}</div>
                     </div>
-                    <div>
-                      <div className="text-xs text-muted-foreground">Portfolios Open</div>
-                      <div className="text-2xl font-bold text-primary">{portfolios.length}</div>
+                    <div className="rbc-kpi">
+                      <div className="rbc-kpi-label">Portfolios Open</div>
+                      <div className="rbc-kpi-value">{portfolios.length}</div>
                     </div>
-
                   </div>
                 )}
                 {!loading && !error && user.investEaseClientId && (
                   <div className="mt-4 border-t pt-4">
-                    <div className="text-sm font-medium mb-2">Add Cash</div>
+                    <div className="rbc-heading-sm mb-2">Add Cash</div>
                     <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
                       <input
                         type="number"
@@ -355,7 +347,7 @@ export function PortfolioManagement() {
                         step="1"
                         value={depositAmount}
                         onChange={(e) => setDepositAmount(e.target.value)}
-                        className="w-full sm:w-48 rounded-md border px-3 py-2 bg-background"
+                        className="rbc-input w-full sm:w-48"
                       />
                       <button
                         disabled={depositBusy}
@@ -405,12 +397,12 @@ export function PortfolioManagement() {
                             setLoading(false)
                           }
                         }}
-                        className="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium shadow transition-colors hover:opacity-90 disabled:opacity-50"
+                        className="rbc-btn"
                       >
                         {depositBusy ? "Depositing…" : "Deposit"}
                       </button>
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">Min deposit: $1</div>
+                    <div className="rbc-muted text-xs mt-1">Min deposit: $1</div>
                   </div>
                 )}
               </div>
@@ -418,10 +410,10 @@ export function PortfolioManagement() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card/95 backdrop-blur-sm">
+        <Card className="rbc-card">
           <CardHeader>
-            <CardTitle>My Portfolios</CardTitle>
-            <CardDescription>Fetched from InvestEase</CardDescription>
+            <CardTitle className="rbc-heading">My Portfolios</CardTitle>
+            <CardDescription className="rbc-muted">Fetched from InvestEase</CardDescription>
           </CardHeader>
           <CardContent>
             {!user.investEaseClientId && (
@@ -431,8 +423,8 @@ export function PortfolioManagement() {
               <div className="space-y-3">
                 {/* Simulate your future */}
                 {!loading && !error && (
-                  <div className="mb-4 border rounded-lg p-4">
-                    <div className="text-sm font-medium mb-2">Simulate your future</div>
+                  <div className="mb-4 rbc-subcard">
+                    <div className="rbc-heading-sm mb-2">Simulate your future</div>
                     <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
                       <input
                         type="number"
@@ -442,7 +434,7 @@ export function PortfolioManagement() {
                         placeholder="Months (1-12)"
                         value={simulateMonths}
                         onChange={(e) => setSimulateMonths(e.target.value)}
-                        className="w-full sm:w-48 rounded-md border px-3 py-2 bg-background"
+                        className="rbc-input w-full sm:w-48"
                       />
                       <button
                         disabled={simulateBusy}
@@ -481,22 +473,22 @@ export function PortfolioManagement() {
                             setSimulateBusy(false)
                           }
                         }}
-                        className="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium shadow transition-colors hover:opacity-90 disabled:opacity-50"
+                        className="rbc-btn"
                       >
                         {simulateBusy ? 'Simulating…' : 'Simulate'}
                       </button>
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">Choose 1–12 months. This runs a sandbox simulation and updates analyses below.</div>
+                    <div className="rbc-muted text-xs mt-1">Choose 1–12 months. This runs a sandbox simulation and updates analyses below.</div>
                   </div>
                 )}
                 {!loading && !error && (client?.cash ?? 0) > 0 && (
-                  <div className="mb-4 border rounded-lg p-4">
-                    <div className="text-sm font-medium mb-2">Create Portfolio</div>
+                  <div className="mb-4 rbc-subcard">
+                    <div className="rbc-heading-sm mb-2">Create Portfolio</div>
                     <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
                       <select
                         value={createStrategy}
                         onChange={(e) => setCreateStrategy(e.target.value)}
-                        className="w-full sm:w-72 rounded-md border px-3 py-2 bg-background"
+                        className="rbc-input w-full sm:w-72"
                       >
                         {STRATEGIES.map((s) => (
                           <option key={s.value} value={s.value}>
@@ -512,7 +504,7 @@ export function PortfolioManagement() {
                         placeholder={`${(client?.cash ?? 0).toLocaleString?.() || client?.cash || 0}`}
                         value={createAmount}
                         onChange={(e) => setCreateAmount(e.target.value)}
-                        className="w-full sm:w-48 rounded-md border px-3 py-2 bg-background"
+                        className="rbc-input w-full sm:w-48"
                       />
                       <button
                         disabled={createBusy}
@@ -568,7 +560,7 @@ export function PortfolioManagement() {
                             setLoading(false)
                           }
                         }}
-                        className="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium shadow transition-colors hover:opacity-90 disabled:opacity-50"
+                        className="rbc-btn"
                       >
                         {createBusy ? "Creating…" : "Create"}
                       </button>
@@ -594,7 +586,7 @@ export function PortfolioManagement() {
                           const pctColor = pct == null ? 'text-muted-foreground' : pct >= 0 ? 'text-emerald-600' : 'text-red-600'
                           const wid = p.id
                           return (
-                            <div key={p.id} className="p-4 border rounded-lg">
+                            <div key={p.id} className="p-4 border rounded-lg rbc-card rbc-portfolio-card">
                               <div className="flex items-start justify-between gap-4">
                                 <div className="space-y-1">
                                   <div className="text-2xl md:text-3xl font-bold">${value.toLocaleString()}</div>
@@ -611,7 +603,7 @@ export function PortfolioManagement() {
                                             setTransferOpen((prev) => ({ ...prev, [wid]: true }))
                                             setWithdrawOpen((prev) => ({ ...prev, [wid]: false }))
                                           }}
-                                          className="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-primary/80 text-primary-foreground px-3 py-1 text-xs font-medium shadow hover:opacity-90"
+                                          className="rbc-btn rbc-btn--secondary"
                                         >
                                           Add
                                         </button>
@@ -620,7 +612,7 @@ export function PortfolioManagement() {
                                             setWithdrawOpen((prev) => ({ ...prev, [wid]: true }))
                                             setTransferOpen((prev) => ({ ...prev, [wid]: false }))
                                           }}
-                                          className="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-primary/80 text-primary-foreground px-3 py-1 text-xs font-medium shadow hover:opacity-90"
+                                          className="rbc-btn rbc-btn--secondary"
                                         >
                                           Withdraw
                                         </button>
@@ -635,7 +627,7 @@ export function PortfolioManagement() {
                                           placeholder="Amount"
                                           value={transferAmounts[wid] ?? ''}
                                           onChange={(e) => setTransferAmounts((prev) => ({ ...prev, [wid]: e.target.value }))}
-                                          className="w-36 rounded-md border px-3 py-1 text-sm bg-background text-right"
+                                          className="rbc-input w-36 text-right"
                                         />
                                         <button
                                           disabled={!!transferBusy[wid]}
@@ -675,13 +667,13 @@ export function PortfolioManagement() {
                                               setTransferBusy((prev) => ({ ...prev, [wid]: false }))
                                             }
                                           }}
-                                          className="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-primary text-primary-foreground px-3 py-1 text-xs font-medium shadow transition-colors hover:opacity-90 disabled:opacity-50"
+                                          className="rbc-btn"
                                         >
                                           {transferBusy[wid] ? 'Adding…' : 'Confirm'}
                                         </button>
                                         <button
                                           onClick={() => setTransferOpen((prev) => ({ ...prev, [wid]: false }))}
-                                          className="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-muted px-3 py-1 text-xs font-medium shadow hover:opacity-90"
+                                          className="rbc-btn rbc-btn--ghost"
                                         >
                                           Cancel
                                         </button>
@@ -696,7 +688,7 @@ export function PortfolioManagement() {
                                           placeholder="Amount"
                                           value={withdrawAmounts[wid] ?? ''}
                                           onChange={(e) => setWithdrawAmounts((prev) => ({ ...prev, [wid]: e.target.value }))}
-                                          className="w-36 rounded-md border px-3 py-1 text-sm bg-background text-right"
+                                          className="rbc-input w-36 text-right"
                                         />
                                         <button
                                           disabled={!!withdrawBusy[wid]}
@@ -736,13 +728,13 @@ export function PortfolioManagement() {
                                               setWithdrawBusy((prev) => ({ ...prev, [wid]: false }))
                                             }
                                           }}
-                                          className="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-primary text-primary-foreground px-3 py-1 text-xs font-medium shadow transition-colors hover:opacity-90 disabled:opacity-50"
+                                          className="rbc-btn"
                                         >
                                           {withdrawBusy[wid] ? 'Withdrawing…' : 'Confirm'}
                                         </button>
                                         <button
                                           onClick={() => setWithdrawOpen((prev) => ({ ...prev, [wid]: false }))}
-                                          className="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-muted px-3 py-1 text-xs font-medium shadow hover:opacity-90"
+                                          className="rbc-btn rbc-btn--ghost"
                                         >
                                           Cancel
                                         </button>
@@ -864,6 +856,41 @@ export function PortfolioManagement() {
           </CardContent>
         </Card>
       </div>
+
+      <style jsx>{`
+        .rbc-theme { --rbc-blue: #005DAA; --rbc-blue-dark: #004c8f; --rbc-navy: #003B73; --rbc-gold: #FDB515; }
+        .rbc-hero { background: linear-gradient(135deg, var(--rbc-blue), var(--rbc-navy)); color: #fff; padding: 18px 0 28px; }
+        .rbc-hero-inner { max-width: 64rem; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding: 0 16px; }
+        .rbc-hero-text .rbc-product { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; opacity: .9; }
+        .rbc-hero-text .rbc-title { font-size: 24px; font-weight: 700; margin-top: 2px; }
+        .rbc-hero-accent { height: 4px; background: var(--rbc-gold); opacity: .95; margin-top: 14px; }
+        .rbc-logo { border-radius: 6px; }
+        .rbc-content { margin-top: -20px; }
+
+        .rbc-card { background: #fff; border: 1px solid #E5EAF0; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+        .rbc-subcard { background: #fff; border: 1px solid #E5EAF0; border-radius: 10px; padding: 16px; }
+        .rbc-heading { font-weight: 700; color: #102A43; }
+        .rbc-heading-sm { font-weight: 600; color: #102A43; font-size: 0.95rem; }
+        .rbc-muted { color: #5B7083; }
+
+        .rbc-kpi { background: #F7FAFC; border: 1px solid #E5EAF0; border-radius: 10px; padding: 12px; }
+        .rbc-kpi-label { font-size: 12px; color: #5B7083; text-transform: uppercase; letter-spacing: .04em; }
+        .rbc-kpi-value { font-size: 22px; font-weight: 700; color: var(--rbc-blue); }
+
+        .rbc-portfolio-card { transition: box-shadow .2s ease, transform .05s ease; }
+        .rbc-portfolio-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.06); transform: translateY(-1px); }
+
+        .rbc-input { border: 1px solid #DDE3EA; background: #fff; border-radius: 8px; padding: 8px 12px; font-size: 14px; outline: none; }
+        .rbc-input:focus { border-color: var(--rbc-blue); box-shadow: 0 0 0 3px rgba(0,93,170,.15); }
+
+        .rbc-btn { background: var(--rbc-blue); color: #fff; border: 1px solid var(--rbc-blue-dark); border-radius: 8px; padding: 8px 14px; font-weight: 600; font-size: 14px; transition: background .15s ease, box-shadow .15s ease; }
+        .rbc-btn:hover { background: var(--rbc-blue-dark); box-shadow: 0 2px 8px rgba(0,93,170,.25); }
+        .rbc-btn:disabled { opacity: .65; cursor: not-allowed; }
+        .rbc-btn--secondary { background: #fff; color: var(--rbc-blue); border: 1px solid var(--rbc-blue); }
+        .rbc-btn--secondary:hover { background: #f2f7fb; }
+        .rbc-btn--ghost { background: #F1F5F9; color: #334155; border: 1px solid #E5EAF0; }
+        .rbc-btn--ghost:hover { background: #E9EEF5; }
+      `}</style>
     </div>
   )
 }
