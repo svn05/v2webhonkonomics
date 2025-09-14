@@ -11,10 +11,17 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
 from supabase import create_client, Client
+import os
+from dotenv import load_dotenv
 
-# ----------------- CONFIG (edit these) -----------------
-SUPABASE_URL = "https://tsdqdpwprlhilajqurue.supabase.co"  # <— paste your project URL
-SUPABASE_ANON_KEY = "sb_publishable_RlX5wusmndry43NzKFBKSQ_1trRq3hG"  # you provided this
+ # ----------------- CONFIG (edit these) -----------------
+# Load .env into environment variables
+load_dotenv()
+
+SUPABASE_URL = "https://tsdqdpwprlhilajqurue.supabase.co"
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+if not SUPABASE_ANON_KEY:
+    raise RuntimeError("Missing SUPABASE_ANON_KEY in environment")
 
 # The frontend origin allowed to call this API:
 FRONTEND_ORIGINS = ["http://localhost:8000", "http://localhost:3000"]  # list of strings
