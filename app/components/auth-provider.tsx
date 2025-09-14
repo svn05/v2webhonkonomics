@@ -8,8 +8,6 @@ interface User {
   id: string
   email: string
   name: string
-  // InvestEase client id for RBC sandbox
-  investEaseClientId?: string
   honkPoints: number
   goldenEggs: number
   streak: number
@@ -47,113 +45,87 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false)
   }, [])
 
-  // If a saved user exists but has no InvestEase client, initialize one in the background
-  useEffect(() => {
-    const run = async () => {
-      if (!user || user.investEaseClientId) return
-      const clientId = await ensureInvestEaseClient(user.name, user.email)
-      if (clientId) {
-        const updated = { ...user, investEaseClientId: clientId }
-        setUser(updated)
-        localStorage.setItem("honkonomics_user", JSON.stringify(updated))
-      }
-    }
-    run()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.email])
-
-  const ensureInvestEaseClient = async (name: string, email: string): Promise<string | undefined> => {
-    const base = "http://localhost:8000"
-    try {
-      // 1) Try to find an existing client by email
-      const listRes = await fetch(`${base}/investease/clients`)
-      if (!listRes.ok) {
-        console.error("List clients failed", await listRes.text())
-      } else {
-        const clients = await listRes.json()
-        if (Array.isArray(clients)) {
-          const match = clients.find((c: any) => typeof c?.email === "string" && c.email.toLowerCase() === email.toLowerCase())
-          if (match?.id) return match.id as string
-        }
-      }
-
-      // 2) Create a new client with cash=0
-      const createRes = await fetch(`${base}/investease/clients`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, cash: 0 }),
-      })
-      if (!createRes.ok) {
-        console.error("Create client failed", await createRes.text())
-        return undefined
-      }
-      const created = await createRes.json()
-      return created?.id as string
-    } catch (e) {
-      console.error("ensureInvestEaseClient error", e)
-      return undefined
-    }
-  }
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Mock authentication - in real app would call API
-    if (email && password) {
-      const name = email.split("@")[0]
-      const investEaseClientId = await ensureInvestEaseClient(name, email)
-      const mockUser: User = {
-        id: "1",
-        email,
-        name,
-        investEaseClientId,
-        honkPoints: 100,
-        goldenEggs: 5,
-        streak: 1,
-        level: 1,
-        gooseAccessories: ["basic"],
-        portfolioType: "",
-        riskTolerance: "moderate",
-        investmentGoals: [],
-        experienceLevel: "beginner",
-        hasCompletedOnboarding: false,
+    try {
+      console.log("Login called with", email);
+      const res = await fetch("http://localhost:8001/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!res.ok) {
+        console.log("Login failed: response not ok");
+        return false;
       }
-      setUser(mockUser)
-      localStorage.setItem("honkonomics_user", JSON.stringify(mockUser))
-      return true
+      const data = await res.json();
+      console.log("Login response:", data);
+      if (data && data.user_id && data.email) {
+        const userObj: User = {
+          id: data.user_id,
+          email: data.email,
+          name: data.email.split("@")[0],
+          honkPoints: 0,
+          goldenEggs: 0,
+          streak: 0,
+          level: 1,
+          gooseAccessories: ["basic"],
+          portfolioType: "",
+          riskTolerance: "moderate",
+          investmentGoals: [],
+          experienceLevel: "beginner",
+          hasCompletedOnboarding: false,
+        };
+        setUser(userObj);
+        localStorage.setItem("honkonomics_user", JSON.stringify(userObj));
+        console.log("Login successful, user set");
+        return true;
+      }
+      console.log("Login failed: missing user_id or email");
+      return false;
+    } catch (e) {
+      console.error("Login error:", e);
+      return false;
     }
-    return false
-  }
+  };
+
 
   const register = async (email: string, password: string, name: string): Promise<boolean> => {
-    // Mock registration - in real app would call API
-    if (email && password && name) {
-      const investEaseClientId = await ensureInvestEaseClient(name, email)
-      const newUser: User = {
-        id: Date.now().toString(),
-        email,
-        name,
-        investEaseClientId,
-        honkPoints: 50,
-        goldenEggs: 2,
-        streak: 0,
-        level: 1,
-        gooseAccessories: ["basic"],
-        portfolioType: "",
-        riskTolerance: "moderate",
-        investmentGoals: [],
-        experienceLevel: "beginner",
-        hasCompletedOnboarding: false,
-      }
-      setUser(newUser)
-      localStorage.setItem("honkonomics_user", JSON.stringify(newUser))
-      return true
+    try {
+    console.log("Register called with", email, name);
+    const res = await fetch("http://localhost:8001/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, name }),
+    });
+    const data = await res.json();
+    console.log("Signup response:", data);
+    if (!res.ok) return false;
+    // Optionally, auto-login after registration
+    return await login(email, password);
+    } catch (e) {
+      console.error("Register error:", e);
+      return false;
     }
-    return false
-  }
+  };
 
-  const logout = () => {
-    setUser(null)
-    localStorage.removeItem("honkonomics_user")
-  }
+
+  const logout = async () => {
+    console.log("Logout called");
+    try {
+      await fetch("http://localhost:8001/signout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ access_token: "" }), // If you use access tokens, pass here
+      });
+      console.log("Signout API call completed");
+    } catch (e) {
+      console.error("Logout error:", e);
+    }
+    setUser(null);
+    localStorage.removeItem("honkonomics_user");
+    console.log("User state cleared and localStorage removed");
+  };
 
   const updateUser = (updates: Partial<User>) => {
     if (user) {

@@ -36,7 +36,7 @@ POST http://localhost:8001/signup
 Content-Type: application/json
 
 {
-  "email": "wnhbecbdotymwpwody@fxavaj.com",
+  "email": "dryaddvgvhduqhbieo@nespj.com",
   "password": "password",
   "name": "Angela"
 }
