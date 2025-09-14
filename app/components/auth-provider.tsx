@@ -13,6 +13,15 @@ interface User {
   streak: number
   level: number
   gooseAccessories: string[]
+  gooseTuning?: {
+    gooseY: number
+    gooseScale: number
+    hatY: number
+    hatDeg: number
+  }
+  equippedHat?: string
+  equippedAccessory?: string
+  equippedBackground?: string
   portfolioType: string
   riskTolerance: "conservative" | "moderate" | "aggressive"
   investmentGoals: string[]
@@ -35,6 +44,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+
+  const computeLevel = (points: number | undefined): number => {
+    const p = Math.max(0, points ?? 0)
+    // Simple mapping: every 200 points → +1 level. 0–199 => 1, 200–399 => 2, etc.
+    return Math.floor(p / 200) + 1
+  }
 
   useEffect(() => {
     // Check for existing session
@@ -129,7 +144,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateUser = (updates: Partial<User>) => {
     if (user) {
-      const updatedUser = { ...user, ...updates }
+      const merged = { ...user, ...updates }
+      // Auto-compute level from honkPoints
+      merged.level = computeLevel(merged.honkPoints)
+      const updatedUser = merged
       if (updates.portfolioType) {
         updatedUser.hasCompletedOnboarding = true
       }

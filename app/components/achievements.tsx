@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
@@ -134,7 +135,9 @@ export function Achievements() {
   return (
     <div className="max-w-5xl mx-auto p-4 space-y-6">
       <div className="text-center py-4">
-        <div className="text-6xl mb-4">🏆</div>
+        <div className="mb-4 flex justify-center">
+          <Image src="/goose_trophy.png" alt="Goose Trophy" width={160} height={160} className="object-contain" />
+        </div>
         <h1 className="text-3xl font-bold mb-2">Achievements</h1>
         <p className="text-muted-foreground">Track your learning milestones and earn rewards</p>
       </div>

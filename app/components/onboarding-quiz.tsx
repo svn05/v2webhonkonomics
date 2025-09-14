@@ -361,7 +361,7 @@ export function OnboardingQuiz() {
 
       {/* Main Content */}
       <div
-        className={`w-full max-w-5xl transition-all duration-300 ${
+        className={`w-full max-w-3xl mx-auto transition-all duration-300 ${
           isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100"
         }`}
       >
@@ -393,12 +393,10 @@ export function OnboardingQuiz() {
 
         {/* Options Grid */}
         <div
-          className={`grid gap-4 ${
-            currentQ.type === "single" && currentQ.options.length === 3
-              ? "md:grid-cols-3"
-              : currentQ.type === "multiple" && currentQ.options.length === 5
-              ? "md:grid-cols-3 lg:grid-cols-5"
-              : "md:grid-cols-2"
+          className={`grid gap-4 md:gap-6 lg:gap-8 items-stretch place-items-stretch ${
+            currentQ.type === "multiple" && currentQ.options.length === 5
+              ? "sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5"
+              : "sm:grid-cols-2 md:grid-cols-3"
           }`}
         >
           {currentQ.options.map((option, index) => {
@@ -440,7 +438,7 @@ export function OnboardingQuiz() {
         </div>
 
         {/* Navigation */}
-        <div className="flex justify-between items-center mt-10">
+        <div className="flex justify-between items-center mt-10 gap-2 md:gap-4">
           <Button
             variant="ghost"
             onClick={handlePrevious}
@@ -454,40 +452,48 @@ export function OnboardingQuiz() {
             {currentQuestion + 1} of {quizQuestions.length}
           </div>
 
-          {currentQ.type === "multiple" && (
-            <Button
-              onClick={handleNext}
-              disabled={!canProceed() || isCompleting}
-              size="lg"
-              variant="brand"
-              className="px-8"
-            >
-              {isCompleting
-                ? "Setting up..."
-                : currentQuestion === quizQuestions.length - 1
-                ? "Complete"
-                : "Continue"}
-            </Button>
-          )}
-
-          {currentQ.type === "single" &&
-            currentQuestion === quizQuestions.length - 1 &&
-            answers[currentQ.id] && (
-              <Button
-                onClick={completeQuiz}
-                disabled={isCompleting}
-                size="lg"
-                variant="brand"
-                className="px-8"
-              >
-                {isCompleting ? "Setting up..." : "Complete"}
-              </Button>
-            )}
-
-          {currentQ.type === "single" &&
-            currentQuestion < quizQuestions.length - 1 && (
-              <div className="w-24" />
-            )}
+          {/* Right-side primary action: always render to prevent layout shift */}
+          {(() => {
+            const isLast = currentQuestion === quizQuestions.length - 1;
+            if (currentQ.type === "multiple") {
+              return (
+                <Button
+                  onClick={handleNext}
+                  disabled={!canProceed() || isCompleting}
+                  size="lg"
+                  variant="brand"
+                  className="px-8"
+                >
+                  {isCompleting
+                    ? "Setting up..."
+                    : isLast
+                    ? "Complete"
+                    : "Continue"}
+                </Button>
+              );
+            } else {
+              if (isLast) {
+                const canComplete = !!answers[currentQ.id];
+                return (
+                  <Button
+                    onClick={completeQuiz}
+                    disabled={isCompleting || !canComplete}
+                    size="lg"
+                    variant="brand"
+                    className="px-8"
+                  >
+                    {isCompleting ? "Setting up..." : "Complete"}
+                  </Button>
+                );
+              }
+              // Single-choice, auto-advance screens: show disabled button to avoid layout jump
+              return (
+                <Button size="lg" variant="brand" className="px-8" disabled>
+                  Continue
+                </Button>
+              );
+            }
+          })()}
         </div>
       </div>
     </div>

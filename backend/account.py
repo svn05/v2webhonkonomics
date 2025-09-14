@@ -1,7 +1,12 @@
 from fastapi import Query, APIRouter, HTTPException
 from pydantic import BaseModel
 from supabase import create_client, Client
-from supabase_api import SUPABASE_URL, SUPABASE_ANON_KEY
+import os
+# Load .env if needed
+from dotenv import load_dotenv
+load_dotenv()
+SUPABASE_URL = "https://tsdqdpwprlhilajqurue.supabase.co"
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 
 router = APIRouter()
 
