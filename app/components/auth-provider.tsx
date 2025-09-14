@@ -28,6 +28,7 @@ interface User {
   experienceLevel: "beginner" | "intermediate" | "advanced"
   hasCompletedOnboarding: boolean
   country?: string
+  investEaseClientId?: string
 }
 
 interface AuthContextType {
@@ -128,6 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             investmentGoals: [],
             experienceLevel: "beginner",
             hasCompletedOnboarding: false,
+            investEaseClientId: cid,
           };
           setUser(userObj);
           localStorage.setItem("honkonomics_user", JSON.stringify(userObj));
