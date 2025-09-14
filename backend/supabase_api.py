@@ -24,7 +24,7 @@ if not SUPABASE_ANON_KEY:
     raise RuntimeError("Missing SUPABASE_ANON_KEY in environment")
 
 # The frontend origin allowed to call this API:
-FRONTEND_ORIGINS = ["http://localhost:8000", "http://localhost:3000","https://htn2025-508985230aed.herokuapp.com","https://v2webhonkonomics.vercel.app"]  # list of strings
+FRONTEND_ORIGINS = ["http://localhost:8000", "http://localhost:3000","https://v2webhonkonomics.vercel.app"]  # list of strings
 
 # Optional table allowlist. Keep [] to allow all during dev.
 ALLOWED_TABLES: List[str] = []  

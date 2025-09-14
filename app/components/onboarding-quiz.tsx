@@ -176,11 +176,22 @@ const quizQuestions: QuizQuestion[] = [
     id: "country",
     question: "Where are you located?",
     subtitle: (
-      <div className="flex flex-col items-center gap-3">
-        <span>This helps us customize your learning curriculum with region-specific content</span>
-        <div className="flex items-center gap-2 px-4 py-3 bg-muted rounded-full border border-border">
-          <span className="text-sm text-muted-foreground">powered by</span>
-          <Image src="/gemini_logo.png" alt="Gemini" width={56} height={56} className="inline-block" />
+      <div className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto">
+        <div className="flex flex-col items-center gap-3">
+          <span>
+            This helps us customize your learning curriculum with region-specific
+            content
+          </span>
+          <div className="flex items-center gap-2 px-4 py-3 bg-muted rounded-full border border-border">
+            <span className="text-sm text-muted-foreground">powered by</span>
+            <Image
+              src="/gemini_logo.png"
+              alt="Gemini"
+              width={56}
+              height={56}
+              className="inline-block"
+            />
+          </div>
         </div>
       </div>
     ),

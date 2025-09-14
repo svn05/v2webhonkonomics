@@ -69,6 +69,22 @@ export function PortfolioManagement() {
 
   // LLM wiring lives below via fetch; no client SDK used in-browser
 
+  // Normalize portfolio list responses from various backends
+  const extractPortfolios = (raw: any): InvestEasePortfolio[] => {
+    if (!raw) return []
+    // Check if it's an array directly
+    if (Array.isArray(raw)) return raw as InvestEasePortfolio[]
+    // If it's a single portfolio object, wrap it in an array
+    if (raw && typeof raw === 'object' && raw.id) return [raw] as InvestEasePortfolio[]
+    // Check nested arrays
+    if (raw && Array.isArray(raw.portfolios)) return raw.portfolios as InvestEasePortfolio[]
+    if (raw && Array.isArray(raw.data)) return raw.data as InvestEasePortfolio[]
+    // Check if response is a single portfolio in data field
+    if (raw && raw.data && typeof raw.data === 'object' && raw.data.id) return [raw.data] as InvestEasePortfolio[]
+    // If nothing matches, return empty array
+    return []
+  }
+
   // Human-friendly label for strategy values like "balanced" or "aggressive_growth"
   const strategyValueToLabel = (val: any): string | undefined => {
     if (val == null) return undefined
@@ -369,7 +385,7 @@ export function PortfolioManagement() {
 
   const loadPortfolioDetails = async (ids: string[]) => {
     if (!ids.length) return
-    const base = process.env.NEXT_PUBLIC_BFF_URL || "https://htn2025-508985230aed.herokuapp.com"
+    const base = process.env.NEXT_PUBLIC_BFF_URL || "http://localhost:8000"
     try {
       const results = await Promise.all(ids.map(async (id) => {
         const r = await fetch(`${base}/investease/portfolios/${id}`)
@@ -389,7 +405,7 @@ export function PortfolioManagement() {
 
   const loadPortfolioAnalysis = async (ids: string[]) => {
     if (!ids.length) return
-    const base = process.env.NEXT_PUBLIC_BFF_URL || "https://htn2025-508985230aed.herokuapp.com"
+    const base = process.env.NEXT_PUBLIC_BFF_URL || "http://localhost:8000"
     try {
       const results = await Promise.all(
         ids.map(async (id) => {
@@ -436,7 +452,7 @@ export function PortfolioManagement() {
     let cancelled = false
     setLoading(true)
     setError(null)
-    const base = process.env.NEXT_PUBLIC_BFF_URL || "https://htn2025-508985230aed.herokuapp.com"
+    const base = process.env.NEXT_PUBLIC_BFF_URL || "http://localhost:8000"
     Promise.all([
       fetch(`${base}/investease/clients/${uClientId}`).then(async (r) => {
         if (!r.ok) throw new Error(await r.text())
@@ -444,16 +460,21 @@ export function PortfolioManagement() {
       }),
       fetch(`${base}/investease/clients/${uClientId}/portfolios`).then(async (r) => {
         if (!r.ok) throw new Error(await r.text())
-        return r.json()
+        const json = await r.json()
+        console.log('Portfolio response:', json) // Debug log
+        const portfolios = extractPortfolios(json)
+        console.log('Extracted portfolios:', portfolios) // Debug log
+        return portfolios
       }),
     ])
       .then(([c, ps]) => {
         if (cancelled) return
         setClient(c)
-        setPortfolios(Array.isArray(ps) ? ps : [])
+        setPortfolios(extractPortfolios(ps))
         // Load per-portfolio details and analysis
-        if (Array.isArray(ps) && ps.length) {
-          const ids = ps.map((p: any) => p.id).filter(Boolean)
+        const list = extractPortfolios(ps)
+        if (list.length) {
+          const ids = list.map((p: any) => p.id).filter(Boolean)
           loadPortfolioDetails(ids)
           loadPortfolioAnalysis(ids)
         } else {
@@ -657,7 +678,7 @@ export function PortfolioManagement() {
                           setError(null)
                           setDepositBusy(true)
                           try {
-                            const base = process.env.NEXT_PUBLIC_BFF_URL || "https://htn2025-508985230aed.herokuapp.com"
+                            const base = process.env.NEXT_PUBLIC_BFF_URL || "http://localhost:8000"
                             const res = await fetch(`${base}/investease/clients/${uClientId}/deposit`, {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
@@ -771,7 +792,7 @@ export function PortfolioManagement() {
                             setError(null)
                             setSimulateBusy(true)
                             try {
-                              const base = process.env.NEXT_PUBLIC_BFF_URL || 'https://htn2025-508985230aed.herokuapp.com'
+                              const base = process.env.NEXT_PUBLIC_BFF_URL || 'http://localhost:8000'
                               const res = await fetch(`${base}/investease/client/${uClientId}/simulate`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
@@ -786,10 +807,10 @@ export function PortfolioManagement() {
                               // Also refresh client cash & portfolio list values in case they changed
                               const [c, ps] = await Promise.all([
                                 fetch(`${base}/investease/clients/${uClientId}`).then(async (r) => { if (!r.ok) throw new Error(await r.text()); return r.json() }),
-                                fetch(`${base}/investease/clients/${uClientId}/portfolios`).then(async (r) => { if (!r.ok) throw new Error(await r.text()); return r.json() }),
+                                fetch(`${base}/investease/clients/${uClientId}/portfolios`).then(async (r) => { if (!r.ok) throw new Error(await r.text()); const j = await r.json(); return extractPortfolios(j) }),
                               ])
                               setClient(c)
-                              setPortfolios(Array.isArray(ps) ? ps : [])
+                              setPortfolios(extractPortfolios(ps))
                             } catch (e: any) {
                               setError(typeof e?.message === 'string' ? e.message : 'Simulation failed')
                             } finally {
@@ -905,7 +926,7 @@ export function PortfolioManagement() {
                                               setError(null)
                                               setTransferBusy((prev) => ({ ...prev, [wid]: true }))
                                               try {
-                                                const base = process.env.NEXT_PUBLIC_BFF_URL || 'https://htn2025-508985230aed.herokuapp.com'
+                                                const base = process.env.NEXT_PUBLIC_BFF_URL || 'http://localhost:8000'
                                                 const res = await fetch(`${base}/investease/portfolios/${wid}/transfer`, {
                                                   method: 'POST',
                                                   headers: { 'Content-Type': 'application/json' },
@@ -966,7 +987,7 @@ export function PortfolioManagement() {
                                               setError(null)
                                               setWithdrawBusy((prev) => ({ ...prev, [wid]: true }))
                                               try {
-                                                const base = process.env.NEXT_PUBLIC_BFF_URL || 'https://htn2025-508985230aed.herokuapp.com'
+                                                const base = process.env.NEXT_PUBLIC_BFF_URL || 'http://localhost:8000'
                                                 const res = await fetch(`${base}/investease/portfolios/${wid}/withdraw`, {
                                                   method: 'POST',
                                                   headers: { 'Content-Type': 'application/json' },
@@ -1209,7 +1230,7 @@ export function PortfolioManagement() {
                             setError(null)
                             setCreateBusy(true)
                             try {
-                              const base = process.env.NEXT_PUBLIC_BFF_URL || "https://htn2025-508985230aed.herokuapp.com"
+                              const base = process.env.NEXT_PUBLIC_BFF_URL || "http://localhost:8000"
                             const res = await fetch(`${base}/investease/clients/${uClientId}/portfolios`, {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },

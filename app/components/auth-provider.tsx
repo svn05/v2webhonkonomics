@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
 
-      const base = process.env.NEXT_PUBLIC_BFF_URL || "https://htn2025-508985230aed.herokuapp.com"
+      const base = process.env.NEXT_PUBLIC_BFF_URL || "http://localhost:8000"
       
       // 1) Try to find an existing client by email
       const listRes = await fetch(`${base}/investease/clients`)
@@ -85,6 +85,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 body: JSON.stringify({ email, investEaseClientId: cid }),
               })
             } catch {}
+
+            // Ensure local user state is set so the UI can load portfolios
+            const existingSaved = localStorage.getItem("honkonomics_user")
+            let prevUser: Partial<User> | null = null
+            try { prevUser = existingSaved ? JSON.parse(existingSaved) : null } catch {}
+            const userObj: User = {
+              id: cid,
+              email,
+              name: prevUser?.name || email.split("@")[0],
+              honkPoints: prevUser?.honkPoints ?? 0,
+              goldenEggs: prevUser?.goldenEggs ?? 0,
+              streak: prevUser?.streak ?? 0,
+              level: prevUser?.level ?? 1,
+              gooseAccessories: Array.isArray(prevUser?.gooseAccessories) ? (prevUser!.gooseAccessories as string[]) : ["basic"],
+              gooseTuning: prevUser?.gooseTuning,
+              equippedHat: prevUser?.equippedHat,
+              equippedAccessory: prevUser?.equippedAccessory,
+              equippedBackground: prevUser?.equippedBackground,
+              portfolioType: (prevUser as any)?.portfolioType || "",
+              riskTolerance: (prevUser as any)?.riskTolerance || "moderate",
+              investmentGoals: (prevUser as any)?.investmentGoals || [],
+              experienceLevel: (prevUser as any)?.experienceLevel || "beginner",
+              hasCompletedOnboarding: (prevUser as any)?.hasCompletedOnboarding || false,
+              country: (prevUser as any)?.country,
+              investEaseClientId: cid,
+            }
+            setUser(userObj)
+            localStorage.setItem("honkonomics_user", JSON.stringify(userObj))
             return true
           }
         }
@@ -153,7 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (email: string, password: string, name: string): Promise<boolean> => {
     try {
     console.log("Register called with", email, name);
-    const res = await fetch("http://localhost:8001/signup", {
+    const res = await fetch("http://localhost:8000/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, name }),
@@ -173,7 +201,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     console.log("Logout called");
     try {
-      await fetch("http://localhost:8001/signout", {
+      await fetch("http://localhost:8000/signout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ access_token: "" }), // If you use access tokens, pass here
