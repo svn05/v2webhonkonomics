@@ -361,7 +361,7 @@ export function OnboardingQuiz() {
 
       {/* Main Content */}
       <div
-        className={`w-full max-w-5xl transition-all duration-300 ${
+        className={`w-full max-w-3xl mx-auto transition-all duration-300 ${
           isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100"
         }`}
       >
