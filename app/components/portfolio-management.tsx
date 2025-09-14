@@ -367,7 +367,7 @@ export function PortfolioManagement() {
 
   const loadPortfolioDetails = async (ids: string[]) => {
     if (!ids.length) return
-    const base = process.env.NEXT_PUBLIC_BFF_URL || "http://localhost:8000"
+    const base = process.env.NEXT_PUBLIC_BFF_URL || "https://htn2025-508985230aed.herokuapp.com"
     try {
       const results = await Promise.all(ids.map(async (id) => {
         const r = await fetch(`${base}/investease/portfolios/${id}`)
@@ -387,7 +387,7 @@ export function PortfolioManagement() {
 
   const loadPortfolioAnalysis = async (ids: string[]) => {
     if (!ids.length) return
-    const base = process.env.NEXT_PUBLIC_BFF_URL || "http://localhost:8000"
+    const base = process.env.NEXT_PUBLIC_BFF_URL || "https://htn2025-508985230aed.herokuapp.com"
     try {
       const results = await Promise.all(
         ids.map(async (id) => {
@@ -434,7 +434,7 @@ export function PortfolioManagement() {
     let cancelled = false
     setLoading(true)
     setError(null)
-    const base = process.env.NEXT_PUBLIC_BFF_URL || "http://localhost:8000"
+    const base = process.env.NEXT_PUBLIC_BFF_URL || "https://htn2025-508985230aed.herokuapp.com"
     Promise.all([
       fetch(`${base}/investease/clients/${user.investEaseClientId}`).then(async (r) => {
         if (!r.ok) throw new Error(await r.text())
@@ -655,7 +655,7 @@ export function PortfolioManagement() {
                           setError(null)
                           setDepositBusy(true)
                           try {
-                            const base = process.env.NEXT_PUBLIC_BFF_URL || "http://localhost:8000"
+                            const base = process.env.NEXT_PUBLIC_BFF_URL || "https://htn2025-508985230aed.herokuapp.com"
                             const res = await fetch(`${base}/investease/clients/${user.investEaseClientId}/deposit`, {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
@@ -769,7 +769,7 @@ export function PortfolioManagement() {
                             setError(null)
                             setSimulateBusy(true)
                             try {
-                              const base = process.env.NEXT_PUBLIC_BFF_URL || 'http://localhost:8000'
+                              const base = process.env.NEXT_PUBLIC_BFF_URL || 'https://htn2025-508985230aed.herokuapp.com'
                               const res = await fetch(`${base}/investease/client/${user.investEaseClientId}/simulate`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
@@ -903,7 +903,7 @@ export function PortfolioManagement() {
                                               setError(null)
                                               setTransferBusy((prev) => ({ ...prev, [wid]: true }))
                                               try {
-                                                const base = process.env.NEXT_PUBLIC_BFF_URL || 'http://localhost:8000'
+                                                const base = process.env.NEXT_PUBLIC_BFF_URL || 'https://htn2025-508985230aed.herokuapp.com'
                                                 const res = await fetch(`${base}/investease/portfolios/${wid}/transfer`, {
                                                   method: 'POST',
                                                   headers: { 'Content-Type': 'application/json' },
@@ -964,7 +964,7 @@ export function PortfolioManagement() {
                                               setError(null)
                                               setWithdrawBusy((prev) => ({ ...prev, [wid]: true }))
                                               try {
-                                                const base = process.env.NEXT_PUBLIC_BFF_URL || 'http://localhost:8000'
+                                                const base = process.env.NEXT_PUBLIC_BFF_URL || 'https://htn2025-508985230aed.herokuapp.com'
                                                 const res = await fetch(`${base}/investease/portfolios/${wid}/withdraw`, {
                                                   method: 'POST',
                                                   headers: { 'Content-Type': 'application/json' },
@@ -1207,7 +1207,7 @@ export function PortfolioManagement() {
                             setError(null)
                             setCreateBusy(true)
                             try {
-                              const base = process.env.NEXT_PUBLIC_BFF_URL || "http://localhost:8000"
+                              const base = process.env.NEXT_PUBLIC_BFF_URL || "https://htn2025-508985230aed.herokuapp.com"
                               const res = await fetch(`${base}/investease/clients/${user.investEaseClientId}/portfolios`, {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },

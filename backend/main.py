@@ -13,7 +13,7 @@ from fastapi import HTTPException
 # ----------------- CONFIG (no .env) -----------------
 RBC_BASE = "https://2dcq63co40.execute-api.us-east-1.amazonaws.com/dev"
 # Allowed frontend origins for CORS
-FRONTEND_ORIGINS = ["http://localhost:3000", "http://localhost:5432"]  # change to your React origin(s)
+FRONTEND_ORIGINS = ["http://localhost:3000", "http://localhost:5432","https://v2webhonkonomics.vercel.app"]  # change to your React origin(s)
 TEAM_NAME = "TeamSYDE"
 CONTACT_EMAIL = "david.olejniczak@icloud.com"
 PRESEEDED_JWT: Optional[str] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZWFtSWQiOiI0YmRjMDc0Ny01MWE4LTQ2YTktODBhZC0yNGE0Y2IxMTllMTAiLCJ0ZWFtX25hbWUiOiJUZWFtU1lERSIsImNvbnRhY3RfZW1haWwiOiJkYXZpZC5vbGVqbmljemFrQGljbG91ZC5jb20iLCJleHAiOjE3NTg2MTA3ODQuNzQzODYzfQ.xPGypKCcddtKLGIhvX9qxZYRN6qd9ILD1Ks9dVDt9QU"
