@@ -25,13 +25,13 @@ A Next.js app with a FastAPI backend that demos portfolio management on the RBC 
 
 ## Tech Stack
 
-- Frontend: Next.js 15 (App Router), React 19, TypeScript
+- Frontend: Node 18+, Next.js 15 (App Router), React 19, TypeScript
 - Styling/UI: Tailwind CSS 4, Radix UI primitives, shadcn‑style components, lucide‑react, Geist
-- LLM: OpenAI via `app\components\portfolio-management` + Gemini via `app/api/learn` or `backend/gemini_api.py`
-- Backend: FastAPI, Uvicorn, HTTPX (BFF proxy to RBC InvestEase sandbox)
-- Data/Identity: Supabase client (profiles/auth bridge in `backend/`)
+- LLMs: OpenAI via `app\components\portfolio-management` + Gemini via `app/api/learn` or `backend/gemini_api.py`
+- Backend: Python 3.10+, FastAPI, Uvicorn, HTTPX (BFF proxy to RBC InvestEase sandbox)
+- Database/Auth: Supabase client 
 - External APIs: RBC InvestEase Sandbox, Bank of Canada Valet FX
-- Tooling: Node 18+, Python 3.10+
+- Hosting: Vercel (Frontend), Heroku (Backend)
 
 ## Repo Layout
 
