@@ -159,22 +159,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 
   const register = async (email: string, password: string, name: string): Promise<boolean> => {
-    try {
-    console.log("Register called with", email, name);
-    const res = await fetch("http://localhost:8000/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, name }),
-    });
-    const data = await res.json();
-    console.log("Signup response:", data);
-    if (!res.ok) return false;
-    // Optionally, auto-login after registration
-    return await login(email, password);
-    } catch (e) {
-      console.error("Register error:", e);
-      return false;
+    // Create a user object locally and save to localStorage
+    const userObj: User = {
+      id: email,
+      email,
+      name,
+      honkPoints: 0,
+      goldenEggs: 0,
+      streak: 0,
+      level: 1,
+      gooseAccessories: ["basic"],
+      portfolioType: "",
+      riskTolerance: "moderate",
+      investmentGoals: [],
+      experienceLevel: "beginner",
+      hasCompletedOnboarding: false,
+      investEaseClientId: email,
     }
+    setUser(userObj)
+    localStorage.setItem("honkonomics_user", JSON.stringify(userObj))
+    // Optionally, auto-login after registration
+    return true
   };
 
 
