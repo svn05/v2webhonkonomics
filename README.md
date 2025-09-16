@@ -1,5 +1,7 @@
 # Honkonomics — RBC InvestEase Sandbox Demo
 
+## Winner of the Tech@RBC InvestEase Challenge
+
 A Next.js app with a FastAPI backend that demos portfolio management on the RBC InvestEase sandbox. It auto‑provisions a sandbox client, fetches and simulates portfolios, renders RBC‑styled charts, and includes an “Explain My Portfolio” AI helper (OpenAI or Gemini). It also supports multi‑currency display with a live FX badge from the Bank of Canada.
 
 ## Features
