@@ -23,6 +23,16 @@ A Next.js app with a FastAPI backend that demos portfolio management on the RBC 
 - Supabase profile persistence
   - Backend route persists `investEaseClientId` to your `profiles` table by email
 
+## Tech Stack
+
+- Frontend: Next.js 15 (App Router), React 19, TypeScript
+- Styling/UI: Tailwind CSS 4, Radix UI primitives, shadcn‑style components, lucide‑react, Geist
+- LLM: OpenAI via `app\components\portfolio-management` + Gemini via `app/api/learn` or `backend/gemini_api.py`
+- Backend: FastAPI, Uvicorn, HTTPX (BFF proxy to RBC InvestEase sandbox)
+- Data/Identity: Supabase client (profiles/auth bridge in `backend/`)
+- External APIs: RBC InvestEase Sandbox, Bank of Canada Valet FX
+- Tooling: Node 18+, Python 3.10+
+
 ## Repo Layout
 
 - `app/` — Next.js (App Router) frontend
@@ -94,7 +104,7 @@ Open http://localhost:3000 and navigate to the portfolio page. On first visit, a
 ## Key Endpoints
 
 - Frontend → Backend (proxy): `/investease/*` (GET/POST/PATCH… forwarded to RBC sandbox)
-- Persist InvestEase ID: `POST /account/set-investease` body `{ email, investEaseClientId }`
+
 - Learn route: `POST /api/learn` body `{ topic, level }` → JSON micro‑course (Gemini/OpenAI)
 - Optional Gemini service (backend): `/gemini/chat`, `/gemini/chat/stream`
 
@@ -113,4 +123,3 @@ Open http://localhost:3000 and navigate to the portfolio page. On first visit, a
 ---
 
 Made with Honk. 🦆
-
