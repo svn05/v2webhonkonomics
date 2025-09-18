@@ -116,7 +116,7 @@ Open http://localhost:3000 and navigate to the portfolio page. On first visit, a
 
 ## Troubleshooting
 
-- “Missing GOOGLE_API_KEY/GEMINI_API_KEY”: Add Gemini keys or rely on the OpenAI fallback by setting `OPENAI_API_KEY` (server) or `NEXT_PUBLIC_OPENAI_API_KEY` (demo).
+- “Missing GOOGLE_API_KEY/GEMINI_API_KEY”: Add Gemini keys or rely on the OpenAI fallback by setting `OPENAI_API_KEY` (server) or `NEXT_PUBLIC_OPENAI_API_KEY` (demo). API keys used during the hackathon have been killed on Sep 18; feel free to test with your own.
 - Supabase error at startup: Ensure `SUPABASE_URL` and `SUPABASE_ANON_KEY` are set where the backend runs. The app won’t crash; only `/account/*` will return a clear 500 if not set.
 - Type errors on `investEaseClientId`: The UI derives it as `const uClientId = (user as any)?.investEaseClientId ?? null` to avoid type coupling. If you prefer, import the exported `User` interface from `auth-provider.tsx`.
 
